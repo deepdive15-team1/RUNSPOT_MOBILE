@@ -1,0 +1,37 @@
+name: Auto Close Issue on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  close-issue:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close related issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const issueNumbers = prBody.match(/(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#(\d+)/gi);
+            
+            if (issueNumbers) {
+              for (const issueRef of issueNumbers) {
+                const issueNumber = issueRef.match(/#(\d+)/i)[1];
+                try {
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    state: 'closed'
+                  });
+                  console.log(`Closed issue #${issueNumber}`);
+                } catch (error) {
+                  console.log(`Failed to close issue #${issueNumber}: ${error.message}`);
+                }
+              }
+            } else {
+              console.log('No related issues found in PR body');
+            }
+
