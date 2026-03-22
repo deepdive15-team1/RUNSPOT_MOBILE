@@ -8,6 +8,9 @@ export {
   borderRadius,
   elevation,
   shadowStyle,
+  dropdownMenuShadow,
+  textFieldErrorFocusShadow,
+  selectErrorRingShadow,
   zIndex,
 } from "./theme";
 export type { ColorKey } from "./theme";
