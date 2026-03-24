@@ -3,6 +3,8 @@
  * StyleSheet에서 theme.colors.primary 형태로 사용
  */
 
+import { Platform, type ViewStyle } from "react-native";
+
 // ============ Colors ============
 export const colors = {
   // Brand / Primary
@@ -154,6 +156,48 @@ export const shadowStyle = {
     elevation: 8,
   },
 } as const;
+
+/** 웹: `shadow*` 대신 `boxShadow` (RN Web 콘솔 경고 방지). 네이티브는 기존 shadow* 유지. */
+export function dropdownMenuShadow(): ViewStyle {
+  if (Platform.OS === "web") {
+    return {
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
+    };
+  }
+  return { ...shadowStyle.lg };
+}
+
+/** TextField 에러 + 포커스 시 링 (웹은 boxShadow) */
+export function textFieldErrorFocusShadow(): ViewStyle {
+  if (Platform.OS === "web") {
+    return {
+      boxShadow: "0 0 0 3px rgba(220, 38, 38, 0.1)",
+    };
+  }
+  return {
+    shadowColor: colors.error,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  };
+}
+
+/** Select 에러 테두리 강조 (웹은 boxShadow) */
+export function selectErrorRingShadow(): ViewStyle {
+  if (Platform.OS === "web") {
+    return {
+      boxShadow: "0 0 4px rgba(220, 38, 38, 0.2)",
+    };
+  }
+  return {
+    shadowColor: colors.error,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 2,
+    elevation: 2,
+  };
+}
 
 // ============ Z-Index ============
 export const zIndex = {
