@@ -6,13 +6,12 @@ export default function RootLayout() {
   return (
     <Stack
       screenOptions={{
+        headerShown: false,
         contentStyle: {
           flex: 1,
           backgroundColor: colors.bgSecondary,
         },
       }}
-    >
-      <Stack.Screen name="index" options={{ title: "Home" }} />
-    </Stack>
+    />
   );
 }
