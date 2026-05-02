@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const ACCESS_TOKEN_KEY = "accessToken";
 
@@ -16,6 +17,15 @@ export function getAccessToken(): string | null {
 export async function setAccessToken(token: string | null): Promise<void> {
   accessToken = token;
 
+  if (Platform.OS === "web") {
+    if (token) {
+      globalThis.localStorage?.setItem(ACCESS_TOKEN_KEY, token);
+    } else {
+      globalThis.localStorage?.removeItem(ACCESS_TOKEN_KEY);
+    }
+    return;
+  }
+
   if (!token) {
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
     return;
@@ -26,7 +36,10 @@ export async function setAccessToken(token: string | null): Promise<void> {
 
 /** 앱 시작 시 SecureStore에서 토큰을 복원해 메모리에 적재합니다. */
 export async function hydrateAccessToken(): Promise<string | null> {
-  const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  const token =
+    Platform.OS === "web"
+      ? (globalThis.localStorage?.getItem(ACCESS_TOKEN_KEY) ?? null)
+      : await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
   accessToken = token;
   return token;
 }
