@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -10,10 +11,12 @@ import {
   View,
 } from "react-native";
 
+import { signup } from "@/src/api/auth/authApi.index";
 import { Input } from "@/src/components/common/Input/Input";
 import { Button } from "@/src/components/common/button/Button";
 import { Select } from "@/src/components/common/select";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import type { AgeGroup, Gender } from "@/src/types/api/auth";
 import {
   areEqual,
   formatPaceDisplay,
@@ -49,12 +52,15 @@ export default function SignupScreen() {
   const [weeklyRuns, setWeeklyRuns] = useState("");
   const [avgPaceMinPerKm, setAvgPaceMinPerKm] = useState("");
   const [error, setError] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePaceChange = (value: string) => {
     setAvgPaceMinPerKm(formatPaceDisplay(value));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
     const next: Record<string, string> = {};
 
     if (isEmpty(username)) next.username = "아이디를 입력해주세요.";
@@ -85,16 +91,51 @@ export default function SignupScreen() {
       next.weeklyRuns = "1~7 사이 숫자를 입력해주세요.";
     }
 
+    const paceSeconds = paceStringToSeconds(avgPaceMinPerKm.trim());
     if (isEmpty(avgPaceMinPerKm)) {
       next.avgPaceMinPerKm = "평균 페이스를 입력해주세요.";
-    } else if (paceStringToSeconds(avgPaceMinPerKm.trim()) === null) {
+    } else if (paceSeconds === null) {
       next.avgPaceMinPerKm = "mm:ss 형식으로 입력해주세요. (예: 05:30)";
     }
 
-    setError(next);
+    if (Object.keys(next).length > 0) {
+      setError(next);
+      return;
+    }
 
-    // TODO: 회원가입 API 연동 예정
-    if (Object.keys(next).length > 0) return;
+    const requestBody = {
+      username: username.trim(),
+      password,
+      name: name.trim(),
+      ageGroup: ageGroup as AgeGroup,
+      gender: gender as Gender,
+      weeklyRuns: Number(weeklyRuns),
+      avgPaceMinPerKm: paceSeconds!,
+    };
+
+    try {
+      setIsSubmitting(true);
+      setError({});
+      await signup(requestBody);
+      router.replace("/login");
+    } catch (error) {
+      const fallbackMessage = "회원가입에 실패했습니다.";
+      if (error instanceof AxiosError) {
+        const serverMessage = error.response?.data?.message;
+        setError((prev) => ({
+          ...prev,
+          form:
+            typeof serverMessage === "string" && serverMessage.trim().length > 0
+              ? serverMessage
+              : fallbackMessage,
+        }));
+        return;
+      }
+
+      setError((prev) => ({ ...prev, form: fallbackMessage }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -197,9 +238,10 @@ export default function SignupScreen() {
               variant="primary"
               size="md"
               fullWidth
+              disabled={isSubmitting}
               onPress={handleSubmit}
             >
-              가입
+              {isSubmitting ? "가입 중..." : "가입"}
             </Button>
           </View>
         </View>
