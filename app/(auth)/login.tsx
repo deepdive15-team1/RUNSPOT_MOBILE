@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -10,6 +11,8 @@ import {
   View,
 } from "react-native";
 
+import { login } from "@/src/api/auth/authApi.index";
+import { setAccessToken } from "@/src/api/authToken";
 import LockIcon from "@/src/assets/icon/auth/lock.svg";
 import LogoIcon from "@/src/assets/icon/brand/logo.svg";
 import AvatarIcon from "@/src/assets/icon/common/avatar.svg";
@@ -23,17 +26,48 @@ export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
     const next: Record<string, string> = {};
 
     if (isEmpty(username)) next.username = "아이디를 입력해주세요.";
     if (isEmpty(password)) next.password = "비밀번호를 입력해주세요.";
+    if (Object.keys(next).length > 0) {
+      setError(next);
+      return;
+    }
 
-    setError(next);
+    try {
+      setIsSubmitting(true);
+      setError({});
 
-    // TODO: 로그인 API 연동 예정
-    if (Object.keys(next).length > 0) return;
+      const result = await login({
+        username: username.trim(),
+        password,
+      });
+
+      await setAccessToken(result.accessToken);
+      router.replace("/(main)");
+    } catch (error) {
+      const fallbackMessage = "로그인에 실패했습니다.";
+      if (error instanceof AxiosError) {
+        const serverMessage = error.response?.data?.message;
+        setError((prev) => ({
+          ...prev,
+          form:
+            typeof serverMessage === "string" && serverMessage.trim().length > 0
+              ? serverMessage
+              : fallbackMessage,
+        }));
+        return;
+      }
+      setError((prev) => ({ ...prev, form: fallbackMessage }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,9 +116,10 @@ export default function LoginScreen() {
               variant="primary"
               size="md"
               fullWidth
+              disabled={isSubmitting}
               onPress={handleSubmit}
             >
-              로그인
+              {isSubmitting ? "로그인 중..." : "로그인"}
             </Button>
           </View>
         </View>
