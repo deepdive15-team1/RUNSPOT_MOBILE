@@ -4,6 +4,9 @@ import {
   NaverMapPathOverlay,
   MapImageProp,
   NaverMapViewRef,
+  Camera,
+  CameraChangeReason,
+  Region,
 } from "@mj-studio/react-native-naver-map";
 import { useCallback, forwardRef, memo } from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
@@ -31,9 +34,15 @@ interface NaverMapComponentProps {
 
   // UI 및 기능 설정
   showLocationButton?: boolean; // 현재 위치로 가는 버튼 표시 여부
-  isCreateMode?: boolean; // true면 코스 그리기 모드
   isShowZoomControls?: boolean;
   onMapTap?: (latitude: number, longitude: number) => void;
+
+  onCameraChanged?: (
+    params: Camera & {
+      reason: CameraChangeReason;
+      region: Region;
+    },
+  ) => void;
 
   // 커뮤니티용 정적 지도 설정
   // 스크롤뷰 안에서 지도가 움직이지 않게 고정할 때 사용
@@ -54,9 +63,9 @@ export const NaverMapComponent = memo(
         markers = [],
         routePath,
         showLocationButton = false,
-        isCreateMode = false,
         isShowZoomControls = false,
         onMapTap,
+        onCameraChanged,
         isScrollGesturesEnabled = false,
         isZoomGesturesEnabled = false,
         lineColor = theme.colors.main,
@@ -66,12 +75,11 @@ export const NaverMapComponent = memo(
     ) => {
       const handleMapTap = useCallback(
         (e: { latitude: number; longitude: number }) => {
-          //코스 생성 모드일 때만 부모에게 좌표 전달
-          if (isCreateMode && onMapTap) {
+          if (onMapTap) {
             onMapTap(e.latitude, e.longitude);
           }
         },
-        [isCreateMode, onMapTap],
+        [onMapTap],
       );
 
       return (
@@ -85,6 +93,7 @@ export const NaverMapComponent = memo(
             isZoomGesturesEnabled={isZoomGesturesEnabled}
             onTapMap={handleMapTap}
             isShowZoomControls={isShowZoomControls} // 기본 줌 버튼 숨기기
+            onCameraChanged={onCameraChanged}
           >
             {/* 마커 렌더링 */}
             {markers.map((marker) => (
