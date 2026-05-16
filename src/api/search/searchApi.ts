@@ -3,6 +3,8 @@ import {
   GetMarkersParams,
   MapMarkerResponse,
   RunningItem,
+  RunningSearchResponse,
+  SearchParamType,
 } from "@/src/types/api/search";
 
 export const getMapMarkers = async (
@@ -19,5 +21,12 @@ export const getSessionDetail = async (
   sessionId: number,
 ): Promise<RunningItem> => {
   const response = await axiosInstance.get(`/sessions/${sessionId}/summary`);
+  return response.data;
+};
+
+export const searchSessions = async (
+  params: SearchParamType,
+): Promise<RunningSearchResponse> => {
+  const response = await axiosInstance.get("/sessions/search", { params });
   return response.data;
 };

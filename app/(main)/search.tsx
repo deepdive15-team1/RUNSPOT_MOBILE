@@ -1,7 +1,14 @@
-import * as Location from "expo-location";
+import { NaverMapViewRef } from "@mj-studio/react-native-naver-map";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
+import { useState, useEffect, useRef, useMemo } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ActivityIndicator,
+} from "react-native";
 
 import SearchSvg from "../../src/assets/icon/search.svg";
 
@@ -13,89 +20,67 @@ import { Input } from "@/src/components/common/Input/Input";
 import Chip from "@/src/components/common/chip";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
 import { BottomOverlay } from "@/src/components/search/BottomOverLay";
-import {
-  RunningItem,
-  GetMarkersParams,
-  MapMarkerResponse,
-} from "@/src/types/api/search";
+import { theme } from "@/src/constants";
+import { useCurrentLocation } from "@/src/hooks/search/useCurrentLocation";
+import { GetMarkersParams } from "@/src/types/api/search";
 
 const MOCK_FILTERS = ["3km 이내", "오늘", "10km 이상"];
 
 export default function SearchScreen() {
   const router = useRouter();
-
-  const [selectedCourse, setSelectedCourse] = useState<RunningItem | null>(
+  const { camera } = useCurrentLocation();
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
     null,
   );
-  const [camera, setCamera] = useState<{
-    latitude: number;
-    longitude: number;
-    zoom: number;
-  } | null>(null);
-
   const [bounds, setBounds] = useState<GetMarkersParams | null>(null);
-
-  const [markers, setMarkers] = useState<MapMarkerResponse[]>([]);
-
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const mapRef = useRef<NaverMapViewRef>(null);
 
-  //디바운싱 타이머
+  const { data: markers = [] } = useQuery({
+    queryKey: ["mapMarkers", bounds],
+    queryFn: () => getMapMarkers(bounds!),
+    enabled: !!bounds,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: selectedCourse, isFetching: isDetailLoading } = useQuery({
+    queryKey: ["sessionDetail", selectedSessionId],
+    queryFn: () => getSessionDetail(selectedSessionId!),
+    enabled: !!selectedSessionId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const mapMarkers = useMemo(() => {
+    return markers.map((course) => ({
+      id: course.id,
+      longitude: course.x,
+      latitude: course.y,
+      onTap: () => setSelectedSessionId(course.id),
+    }));
+  }, [markers, setSelectedSessionId]);
+
+  // 컴포넌트 언마운트 시 디바운스 타이머 클리어
   useEffect(() => {
-    if (!bounds) return;
-
-    const fetchMarkers = async () => {
-      try {
-        const data = await getMapMarkers(bounds);
-        setMarkers((prevMarkers) => {
-          const markerMap = new Map(prevMarkers.map((m) => [m.id, m]));
-
-          data.forEach((m) => markerMap.set(m.id, m));
-
-          return Array.from(markerMap.values());
-        });
-      } catch (error) {
-        console.error("마커 가져오기 실패:", error);
-      }
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-
-    fetchMarkers();
-  }, [bounds]);
-
-  // 현재 위치로 지도 초기 위치 로딩
-  useEffect(() => {
-    const fetchCurrentLocation = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status != "granted") {
-        Alert.alert(
-          "위치 권한 필요",
-          "위치 권한이 없어 기본 지도를 표시합니다.\n상단 검색창을 통해 원하는 러닝 지역을 찾아보세요!",
-          [{ text: "확인" }],
-        );
-        setCamera({
-          // 위치 로딩 실패 시 대한민국 정중앙 부근의 좌표를 넣어서 전국이 보이게 유도
-          latitude: 36.5,
-          longitude: 127.5,
-          zoom: 6, //  6으로 줌 아웃
-        });
-        return;
-      }
-
-      const location = await Location.getCurrentPositionAsync({});
-
-      setCamera({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        zoom: 14,
-      });
-    };
-
-    fetchCurrentLocation();
   }, []);
+
+  useEffect(() => {
+    if (camera) {
+      const trackingTimer = setTimeout(() => {
+        mapRef.current?.setLocationTrackingMode("NoFollow");
+      }, 200);
+
+      return () => clearTimeout(trackingTimer);
+    }
+  }, [camera]);
 
   if (camera === null) {
     return (
       <View style={styles.findLocation}>
-        <Text>현재 위치를 찾고 있습니다...</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>현재 위치를 찾고 있습니다</Text>
       </View>
     );
   }
@@ -104,38 +89,27 @@ export default function SearchScreen() {
     <View style={styles.container}>
       <NaverMapComponent
         camera={camera}
-        markers={markers.map((course) => ({
-          id: course.id,
-          longitude: course.x,
-          latitude: course.y,
-          onTap: async () => {
-            try {
-              const data = await getSessionDetail(course.id);
-              setSelectedCourse(data);
-            } catch (error) {
-              console.error("상세정보 가져오기 실패", error);
-            }
-          },
-        }))}
-        onMapTap={() => setSelectedCourse(null)}
+        markers={mapMarkers}
+        ref={mapRef}
+        onMapTap={() => setSelectedSessionId(null)}
         isScrollGesturesEnabled
+        showLocationButton
         onCameraChanged={(e) => {
-          if (e.reason !== "Gesture") return; // 유저가 드래그한 게 아니라면 무시
+          if (e.reason !== "Gesture") return;
 
-          // 유저가 계속 드래그 중이라면, 기존에 걸어둔 예약(타이머)을 취소
+          // 유저가 계속 드래그 중이라면, 기존에 걸어둔 타이머을 취소
           if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
           }
 
-          // 드래그가 멈추고 0.2초가 지나면 한 번만 State를 업데이트
           debounceTimerRef.current = setTimeout(() => {
             setBounds({
-              leftX: e.region.longitude,
-              leftY: e.region.latitude,
-              rightX: e.region.longitude + e.region.longitudeDelta,
-              rightY: e.region.latitude + e.region.latitudeDelta,
+              leftX: e.region.longitude - e.region.longitudeDelta / 2,
+              leftY: e.region.latitude - e.region.latitudeDelta / 2,
+              rightX: e.region.longitude + e.region.longitudeDelta / 2,
+              rightY: e.region.latitude + e.region.latitudeDelta / 2,
             });
-          }, 200); // 200ms 디바운스
+          }, 300);
         }}
       />
       <View style={styles.topOverlay}>
@@ -151,11 +125,16 @@ export default function SearchScreen() {
         </Pressable>
 
         <View style={styles.chipContainer}>
-          {MOCK_FILTERS.map((text, index) => (
-            <Chip key={index} label={text} />
+          {MOCK_FILTERS.map((text) => (
+            <Chip key={text} label={text} />
           ))}
         </View>
       </View>
+      {isDetailLoading && (
+        <View style={styles.detailLoadingOverlay}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      )}
       {selectedCourse && <BottomOverlay {...selectedCourse} />}
     </View>
   );
@@ -180,5 +159,22 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
 
-  findLocation: { flex: 1, justifyContent: "center", alignItems: "center" },
+  findLocation: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    color: theme.colors.gray500,
+    fontSize: theme.fontSizes.sm,
+  },
+
+  detailLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
 });
