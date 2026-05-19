@@ -12,10 +12,8 @@ import {
 
 import SearchSvg from "../../src/assets/icon/search.svg";
 
-import {
-  getMapMarkers,
-  getSessionDetail,
-} from "@/src/api/search/searchApi.index";
+import { getMapMarkers } from "@/src/api/search/searchApi.index";
+import { getSessionDetail } from "@/src/api/session-detail/sessionDetailApi.index";
 import { Input } from "@/src/components/common/Input/Input";
 import Chip from "@/src/components/common/chip";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
@@ -25,6 +23,9 @@ import { useCurrentLocation } from "@/src/hooks/search/useCurrentLocation";
 import { GetMarkersParams } from "@/src/types/api/search";
 
 const MOCK_FILTERS = ["3km 이내", "오늘", "10km 이상"];
+const SEARCH_DEBOUNCE_MS = 300;
+const CACHE_TIME_1_MIN = 1000 * 60;
+const CACHE_TIME_5_MIN = 1000 * 60 * 5;
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -40,14 +41,14 @@ export default function SearchScreen() {
     queryKey: ["mapMarkers", bounds],
     queryFn: () => getMapMarkers(bounds!),
     enabled: !!bounds,
-    staleTime: 1000 * 60,
+    staleTime: CACHE_TIME_1_MIN,
   });
 
   const { data: selectedCourse, isFetching: isDetailLoading } = useQuery({
     queryKey: ["sessionDetail", selectedSessionId],
     queryFn: () => getSessionDetail(selectedSessionId!),
     enabled: !!selectedSessionId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: CACHE_TIME_5_MIN,
   });
 
   const mapMarkers = useMemo(() => {
@@ -95,7 +96,7 @@ export default function SearchScreen() {
         isScrollGesturesEnabled
         showLocationButton
         onCameraChanged={(e) => {
-          if (e.reason !== "Gesture") return;
+          if (bounds !== null && e.reason !== "Gesture") return;
 
           // 유저가 계속 드래그 중이라면, 기존에 걸어둔 타이머을 취소
           if (debounceTimerRef.current) {
@@ -109,7 +110,7 @@ export default function SearchScreen() {
               rightX: e.region.longitude + e.region.longitudeDelta / 2,
               rightY: e.region.latitude + e.region.latitudeDelta / 2,
             });
-          }, 300);
+          }, SEARCH_DEBOUNCE_MS);
         }}
       />
       <View style={styles.topOverlay}>

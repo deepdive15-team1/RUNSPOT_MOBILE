@@ -2,7 +2,6 @@ import * as Location from "expo-location";
 import { useState, useEffect } from "react";
 import { Alert } from "react-native";
 
-// 기본 위치
 const DEFAULT_LOCATION = { latitude: 36.5, longitude: 127.5, zoom: 6 };
 
 export function useCurrentLocation() {
@@ -52,6 +51,11 @@ export function useCurrentLocation() {
       } catch (error) {
         if (!isMounted) return;
         console.warn("위치 로드 실패", error);
+        Alert.alert(
+          "현재 위치를 찾지 못해 전국 지도를 표시합니다.",
+          "원하는 위치를 찾아보세요.",
+          [{ text: "확인" }],
+        );
         setCamera(DEFAULT_LOCATION);
       }
     };
