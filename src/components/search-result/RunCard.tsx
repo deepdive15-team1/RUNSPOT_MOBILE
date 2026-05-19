@@ -6,45 +6,10 @@ import { Button } from "../common/button/Button";
 import Chip from "../common/chip";
 
 import { theme } from "@/src/constants";
+import { GENDER_INFO, RUN_TYPE_INFO } from "@/src/constants/session";
 import { RunningItem } from "@/src/types/api/search";
-import { GenderPolicy, RunType } from "@/src/types/search/search";
 import { secondsToPaceString } from "@/src/utils";
-
-const GENDER_INFO: Record<
-  GenderPolicy,
-  { label: string; color: "default" | "green" }
-> = {
-  MALE_ONLY: { label: "남성", color: "default" },
-  FEMALE_ONLY: { label: "여성", color: "default" },
-  MIXED: { label: "남녀무관", color: "green" },
-};
-
-const RUN_TYPE_INFO: Record<
-  RunType,
-  { label: string; color: "primary" | "red" | "yellow" }
-> = {
-  RECOVERY: { label: "리커버리", color: "primary" },
-  INTERVAL: { label: "인터벌", color: "red" },
-  LSD: { label: "LSD", color: "yellow" },
-};
-
-const formatDisplayDate = (isoString: string) => {
-  const d = new Date(isoString);
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-
-  const days = ["일", "월", "화", "수", "목", "금", "토"];
-  const dayOfWeek = days[d.getDay()];
-
-  let hours = d.getHours();
-  const minutes = d.getMinutes().toString().padStart(2, "0");
-  const ampm = hours >= 12 ? "오후" : "오전";
-
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-
-  return `${month}.${day}(${dayOfWeek}) ${ampm} ${hours}:${minutes}`;
-};
+import { formatDisplayDate } from "@/src/utils/date";
 
 export const RunCard = memo(function RunCard({
   id,
