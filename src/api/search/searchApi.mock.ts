@@ -15,22 +15,7 @@ export const getMapMarkers = async (
   ];
 };
 
-export const getSessionDetail = async (
-  sessionId: number,
-): Promise<RunningItem> => {
-  return {
-    id: sessionId,
-    title: "여의도 한강공원 나이트런",
-    startAt: "2026-05-08T11:00:00.000Z",
-    locationName: "서울시 영등포구 여의도 한강공원",
-    targetDistanceKm: 10,
-    avgPaceSec: 300,
-    genderPolicy: "MIXED",
-    runType: "RECOVERY",
-  };
-};
-
-const DUMMY_DATA: RunningItem[] = [
+export const DUMMY_DATA: RunningItem[] = [
   {
     id: 203,
     title: "여의도 한강공원 주말 모닝 LSD",
