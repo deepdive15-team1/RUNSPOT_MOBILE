@@ -15,5 +15,22 @@ export function useMyPageQueries() {
       { queryKey: ["myPage", "appliedRuns"], queryFn: getAppliedRuns },
       { queryKey: ["myPage", "historyRuns"], queryFn: getHistoryRuns },
     ],
+
+    combine: (results) => {
+      return {
+        profileData: results[0].data,
+        createdRunsData: results[1].data,
+        appliedRunsData: results[2].data,
+        historyRunsData: results[3].data,
+
+        isTotalLoading: results.some((r) => r.isLoading),
+        isRefetching: results.some((r) => r.isRefetching),
+
+        refetchProfile: results[0].refetch,
+        refetchCreatedRuns: results[1].refetch,
+        refetchAppliedRuns: results[2].refetch,
+        refetchHistoryRuns: results[3].refetch,
+      };
+    },
   });
 }

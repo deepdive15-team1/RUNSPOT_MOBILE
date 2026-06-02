@@ -38,31 +38,27 @@ export default function MyPageScreen() {
   const [isSettingsVisible, setSettingsVisible] = useState(false);
   const queryClient = useQueryClient();
 
-  const [profileQuery, createdQuery, appliedQuery, historyQuery] =
-    useMyPageQueries();
-
-  const isRefetching = [
-    profileQuery,
-    createdQuery,
-    appliedQuery,
-    historyQuery,
-  ].some((query) => query.isRefetching);
+  const {
+    profileData,
+    createdRunsData,
+    appliedRunsData,
+    historyRunsData,
+    isTotalLoading,
+    isRefetching,
+    refetchAppliedRuns,
+    refetchCreatedRuns,
+    refetchHistoryRuns,
+    refetchProfile,
+  } = useMyPageQueries();
 
   const router = useRouter();
 
-  const isTotalLoading = [
-    profileQuery,
-    createdQuery,
-    appliedQuery,
-    historyQuery,
-  ].some((query) => query.isLoading);
-
   const onRefresh = async () => {
     await Promise.all([
-      profileQuery.refetch(),
-      createdQuery.refetch(),
-      appliedQuery.refetch(),
-      historyQuery.refetch(),
+      refetchProfile(),
+      refetchCreatedRuns(),
+      refetchAppliedRuns(),
+      refetchHistoryRuns(),
     ]);
   };
 
@@ -123,28 +119,28 @@ export default function MyPageScreen() {
         }
       >
         <ProfileSection
-          data={profileQuery.data}
-          isFetching={profileQuery.isFetching}
-          isError={profileQuery.isError}
-          onRetry={profileQuery.refetch}
+          data={profileData}
+          isFetching={isRefetching}
+          isError={false}
+          onRetry={refetchProfile}
         />
         <CreatedRunsSection
-          data={createdQuery.data}
-          isFetching={createdQuery.isFetching}
-          isError={createdQuery.isError}
-          onRetry={createdQuery.refetch}
+          data={createdRunsData}
+          isFetching={isRefetching}
+          isError={false}
+          onRetry={refetchCreatedRuns}
         />
         <AppliedRunsSection
-          data={appliedQuery.data}
-          isFetching={appliedQuery.isFetching}
-          isError={appliedQuery.isError}
-          onRetry={appliedQuery.refetch}
+          data={appliedRunsData}
+          isFetching={isRefetching}
+          isError={false}
+          onRetry={refetchAppliedRuns}
         />
         <RecentHistorySection
-          data={historyQuery.data}
-          isFetching={historyQuery.isFetching}
-          isError={historyQuery.isError}
-          onRetry={historyQuery.refetch}
+          data={historyRunsData}
+          isFetching={isRefetching}
+          isError={false}
+          onRetry={refetchHistoryRuns}
         />
       </ScrollView>
 
