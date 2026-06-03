@@ -65,6 +65,7 @@ export default function MainLayout() {
           title: "마이",
           tabBarLabel: "마이",
           tabBarIcon: tabIcon("person-outline"),
+          headerShown: false,
         }}
       />
       <Tabs.Screen
