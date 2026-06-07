@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { logout as logoutApi } from "@/src/api/auth/authApi.index";
-import { setAccessToken } from "@/src/api/authToken";
+import { clearAuthTokens, getRefreshToken } from "@/src/api/authToken";
 import LogoIcon from "@/src/assets/icon/brand/logo.svg";
 import { Button } from "@/src/components/common/button/Button";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
@@ -19,11 +19,14 @@ export function HomeHeader() {
     setLoggingOut(true);
     try {
       try {
-        await logoutApi();
+        const refreshToken = getRefreshToken();
+        if (refreshToken) {
+          await logoutApi({ refreshToken });
+        }
       } catch {
         // 서버 실패 시에도 로컬 세션은 정리
       }
-      await setAccessToken(null);
+      await clearAuthTokens();
       router.replace("/(auth)/login");
     } finally {
       setLoggingOut(false);
