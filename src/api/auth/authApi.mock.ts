@@ -1,6 +1,10 @@
 import type {
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
+  LogoutResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
   SignupRequest,
   SignupResponse,
 } from "@/src/types/api/auth";
@@ -18,6 +22,7 @@ export const login = async (
 ): Promise<LoginResponse> => {
   return {
     accessToken: "mock-access-token",
+    refreshToken: "mock-refresh-token",
     userId: 1,
     name: "홍길동",
     ageGroup: "20S",
@@ -28,6 +33,19 @@ export const login = async (
   };
 };
 
-export const logout = async (): Promise<void> => {
-  return;
+export const refresh = async (
+  _requestBody: RefreshTokenRequest,
+): Promise<RefreshTokenResponse> => {
+  return {
+    accessToken: "mock-access-token-refreshed",
+    refreshToken: "mock-refresh-token-refreshed",
+  };
+};
+
+export const logout = async (
+  _requestBody: LogoutRequest,
+): Promise<LogoutResponse> => {
+  return {
+    message: "로그아웃 성공",
+  };
 };
