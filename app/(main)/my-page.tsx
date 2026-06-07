@@ -22,6 +22,7 @@ import {
 } from "../../src/components/mypage/Sections";
 
 import { logout } from "@/src/api/auth/authApi.index";
+import { clearAuthTokens, getRefreshToken } from "@/src/api/authToken";
 import RightArrowSvg from "@/src/assets/icon/my-page/rightarrow.svg";
 import SettingSvg from "@/src/assets/icon/my-page/setting.svg";
 import {
@@ -70,10 +71,14 @@ export default function MyPageScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await logout();
+            const refreshToken = getRefreshToken();
+            if (refreshToken) {
+              await logout({ refreshToken });
+            }
           } catch (error) {
             console.error("서버 로그아웃에 실패하였습니다.", error);
           } finally {
+            await clearAuthTokens();
             queryClient.clear();
             setSettingsVisible(false);
             router.replace("/login");
