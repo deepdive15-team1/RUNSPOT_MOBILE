@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 import { login } from "@/src/api/auth/authApi.index";
-import { setAccessToken } from "@/src/api/authToken";
+import { setAccessToken, setRefreshToken } from "@/src/api/authToken";
 import LockIcon from "@/src/assets/icon/auth/lock.svg";
 import LogoIcon from "@/src/assets/icon/brand/logo.svg";
 import AvatarIcon from "@/src/assets/icon/common/avatar.svg";
@@ -49,7 +49,10 @@ export default function LoginScreen() {
         password,
       });
 
-      await setAccessToken(result.accessToken);
+      await Promise.all([
+        setAccessToken(result.accessToken),
+        setRefreshToken(result.refreshToken),
+      ]);
       router.replace("/(main)");
     } catch (error) {
       const fallbackMessage = "로그인에 실패했습니다.";
