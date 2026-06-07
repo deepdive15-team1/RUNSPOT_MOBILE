@@ -43,3 +43,6 @@ yarn-error.*
 
 # Android local config
 android/
+
+# IDE
+.idea/
