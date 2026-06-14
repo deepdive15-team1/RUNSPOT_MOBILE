@@ -71,7 +71,15 @@ export default function MainLayout() {
       <Tabs.Screen
         name="create-session"
         options={{
-          title: "러닝 세션 개설",
+          title: "러닝 모임 만들기",
+          href: null,
+          headerLeft: () => <StackHeaderBack />,
+        }}
+      />
+      <Tabs.Screen
+        name="draw-running-course"
+        options={{
+          title: "러닝 코스 그리기",
           href: null,
           headerLeft: () => <StackHeaderBack />,
         }}
