@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 
-import { hydrateAccessToken } from "@/src/api/authToken";
+import { hydrateAccessToken, hydrateRefreshToken } from "@/src/api/authToken";
+import { setUnauthorizedHandler } from "@/src/api/axiosInstance";
 import { LoadingScreen } from "@/src/components/common/loading/LoadingScreen";
 import { colors } from "@/src/constants";
 
@@ -14,11 +15,20 @@ export default function RootLayout() {
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
+    setUnauthorizedHandler(() => {
+      router.replace("/(auth)/login");
+    });
+  }, [router]);
+
+  useEffect(() => {
     let isMounted = true;
 
     const bootstrapAuth = async () => {
       try {
-        const token = await hydrateAccessToken();
+        const [token] = await Promise.all([
+          hydrateAccessToken(),
+          hydrateRefreshToken(),
+        ]);
         if (!isMounted) return;
 
         const isAuthRoute = segments[0] === "(auth)";
