@@ -51,3 +51,16 @@ export async function hydrateAccessToken(): Promise<string | null> {
   accessToken = token;
   return token;
 }
+
+/** 앱 시작 시 SecureStore에서 리프레시 토큰을 복원해 메모리에 적재 */
+export async function hydrateRefreshToken(): Promise<string | null> {
+  const token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  refreshToken = token;
+  return token;
+}
+
+/** 메모리에 없으면 SecureStore에서 리프레시 토큰을 읽어 적재 */
+export async function ensureRefreshTokenLoaded(): Promise<string | null> {
+  if (refreshToken) return refreshToken;
+  return hydrateRefreshToken();
+}
