@@ -2,6 +2,10 @@ import { axiosInstance } from "@/src/api/axiosInstance";
 import type {
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
+  LogoutResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
   SignupRequest,
   SignupResponse,
 } from "@/src/types/api/auth";
@@ -26,6 +30,22 @@ export const login = async (
   return response.data;
 };
 
-export const logout = async (): Promise<void> => {
-  await axiosInstance.post("/auth/logout");
+export const refresh = async (
+  requestBody: RefreshTokenRequest,
+): Promise<RefreshTokenResponse> => {
+  const response = await axiosInstance.post<RefreshTokenResponse>(
+    "/auth/refresh",
+    requestBody,
+  );
+  return response.data;
+};
+
+export const logout = async (
+  requestBody: LogoutRequest,
+): Promise<LogoutResponse> => {
+  const response = await axiosInstance.post<LogoutResponse>(
+    "/auth/logout",
+    requestBody,
+  );
+  return response.data;
 };

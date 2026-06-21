@@ -1,16 +1,17 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { logout as logoutApi } from "@/src/api/auth/authApi.index";
-import { setAccessToken } from "@/src/api/authToken";
+import { logoutUser } from "@/src/api/auth/logoutUser";
 import LogoIcon from "@/src/assets/icon/brand/logo.svg";
 import { Button } from "@/src/components/common/button/Button";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
 
 export function HomeHeader() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -18,12 +19,7 @@ export function HomeHeader() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      try {
-        await logoutApi();
-      } catch {
-        // 서버 실패 시에도 로컬 세션은 정리
-      }
-      await setAccessToken(null);
+      await logoutUser({ queryClient });
       router.replace("/(auth)/login");
     } finally {
       setLoggingOut(false);

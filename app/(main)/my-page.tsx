@@ -21,7 +21,7 @@ import {
   RecentHistorySection,
 } from "../../src/components/mypage/Sections";
 
-import { logout } from "@/src/api/auth/authApi.index";
+import { logoutUser } from "@/src/api/auth/logoutUser";
 import RightArrowSvg from "@/src/assets/icon/my-page/rightarrow.svg";
 import SettingSvg from "@/src/assets/icon/my-page/setting.svg";
 import {
@@ -69,15 +69,9 @@ export default function MyPageScreen() {
         text: "로그아웃",
         style: "destructive",
         onPress: async () => {
-          try {
-            await logout();
-          } catch (error) {
-            console.error("서버 로그아웃에 실패하였습니다.", error);
-          } finally {
-            queryClient.clear();
-            setSettingsVisible(false);
-            router.replace("/login");
-          }
+          await logoutUser({ queryClient });
+          setSettingsVisible(false);
+          router.replace("/(auth)/login");
         },
       },
     ]);
