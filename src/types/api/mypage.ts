@@ -3,12 +3,14 @@ import type { GenderPolicy } from "../search/search";
 export type ApproveStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type ResultStatus = "DONE" | "NOSHOW";
 export type RunningStatus = "OPEN" | "CLOSED" | "CANCELED" | "FINISHED";
+export type Gender = "MALE" | "FEMALE";
+export type AgeGroup = "10S" | "20S" | "30S" | "40S" | "50S";
 
 export interface UserProfile {
-  id: number;
+  userId: number;
   name: string;
-  ageGroup: string;
-  gender: string;
+  ageGroup: AgeGroup;
+  gender: Gender;
   weeklyRuns?: number;
   avgPaceMinPerKm?: string;
   mannerTemp: number;
