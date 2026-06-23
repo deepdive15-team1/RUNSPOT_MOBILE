@@ -1,10 +1,12 @@
 import {
   getMapMarkers as realgetMapMarkers,
   searchSessions as realSearchSessions,
+  getSessionSummary as realGetSessionSummary,
 } from "@/src/api/search/searchApi";
 import {
   getMapMarkers as mockgetMapMarkers,
   searchSessions as mockSearchSessions,
+  getSessionSummary as mockGetSessionSummary,
 } from "@/src/api/search/searchApi.mock";
 
 const isMock = process.env.EXPO_PUBLIC_USE_MOCK === "true";
@@ -22,3 +24,12 @@ export const getMapMarkers = isMock ? mockgetMapMarkers : realgetMapMarkers;
  * @returns 검색 조건에 맞는 러닝 세션 목록 및 페이징 정보 (RunningSearchResponse)
  */
 export const searchSessions = isMock ? mockSearchSessions : realSearchSessions;
+
+/**
+ * 러닝 세션 요약 정보 조회 (지도 바텀 시트용)
+ * @param sessionId - 조회할 러닝 세션의 고유 ID
+ * @returns 러닝 세션의 요약 정보
+ */
+export const getSessionSummary = isMock
+  ? mockGetSessionSummary
+  : realGetSessionSummary;

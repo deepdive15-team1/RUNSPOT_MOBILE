@@ -4,7 +4,7 @@ import { SessionDetailResponse } from "@/src/types/api/session-detail";
 export const getSessionDetail = async (
   sessionId: number,
 ): Promise<SessionDetailResponse> => {
-  const response = await axiosInstance.get(`/sessions/${sessionId}/summary`);
+  const response = await axiosInstance.get(`/sessions/${sessionId}`);
   return response.data;
 };
 

@@ -22,3 +22,8 @@ export const searchSessions = async (
   const response = await axiosInstance.get("/sessions/search", { params });
   return response.data;
 };
+
+export const getSessionSummary = async (sessionId: number) => {
+  const response = await axiosInstance.get(`/sessions/${sessionId}/summary`);
+  return response.data;
+};
