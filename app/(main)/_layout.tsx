@@ -84,6 +84,21 @@ export default function MainLayout() {
           headerLeft: () => <StackHeaderBack />,
         }}
       />
+      <Tabs.Screen
+        name="search-result"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="session-detail"
+        options={{
+          href: null,
+          title: "상세 정보",
+          headerLeft: () => <StackHeaderBack />,
+        }}
+      />
     </Tabs>
   );
 }
