@@ -41,8 +41,6 @@ export const ProfileSection = ({
     );
   }
 
-  if (!profile) return null;
-
   if (isError) {
     return (
       <View style={[styles.sectionContainer, styles.centerBox]}>
@@ -53,22 +51,70 @@ export const ProfileSection = ({
       </View>
     );
   }
+
+  if (!profile) {
+    return (
+      <View style={styles.profileContainer}>
+        <View style={styles.profileHeader}>
+          {/* 회색 기본 아바타 */}
+          <View style={[styles.avatar, { backgroundColor: colors.gray300 }]}>
+            <Text style={styles.avatarText}>?</Text>
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.name}>알 수 없는 사용자</Text>
+            <Text style={styles.demographics}>
+              사용자 정보를 확인할 수 없습니다
+            </Text>
+          </View>
+        </View>
+
+        {/* 하단 통계는 모두 0으로 기본값 처리 */}
+        <View style={styles.statsGrid}>
+          <StatBox label="주간 러닝" value="평균 0회" />
+          <StatBox label="평균 페이스" value="-" />
+          <StatBox label="총 러닝" value="0회" />
+          <StatBox label="누적 거리" value="0km" />
+        </View>
+      </View>
+    );
+  }
+
+  // 서버 데이터를 한글로 번역하기 위한 매핑
+  const genderMap: Record<string, string> = {
+    MALE: "남성",
+    FEMALE: "여성",
+  };
+
+  const ageGroupMap: Record<string, string> = {
+    "10S": "10대",
+    "20S": "20대",
+    "30S": "30대",
+    "40S": "40대",
+    "50S": "50대",
+  };
+
+  // 매핑 데이터에 없으면 원본 데이터를 그대로 보여줌
+  const displayGender = genderMap[profile.gender] || profile.gender;
+  const displayAge = ageGroupMap[profile.ageGroup] || profile.ageGroup;
+
+  // 이름이 없을 경우 에러 처리
+  const displayName = profile.name || "런닝메이트";
+  const avatarChar = displayName.charAt(0);
+
   return (
     <View style={styles.profileContainer}>
       <View style={styles.profileHeader}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {profile.name.charAt(profile.name.length - 1)}
-          </Text>
+          <Text style={styles.avatarText}>{avatarChar}</Text>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.name}>{profile.name}</Text>
+          <Text style={styles.name}>{displayName}</Text>
           <Text
             style={styles.demographics}
-          >{`${profile.ageGroup} · ${profile.gender}`}</Text>
+          >{`${displayAge} · ${displayGender}`}</Text>
           <Chip
             icon={<MannerIcon width={14} height={14} fill={colors.red} />}
-            label={`매너온도 ${profile.mannerTemp}°C`}
+            label={`매너온도 ${profile.mannerTemp ?? 36.5}°C`}
             color="red"
             size="small"
             style={styles.mannerChip}

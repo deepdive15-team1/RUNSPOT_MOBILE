@@ -36,6 +36,7 @@ import { useMyPageQueries } from "@/src/hooks/mypage/useMyPageQueries";
 
 export default function MyPageScreen() {
   const [isSettingsVisible, setSettingsVisible] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const queryClient = useQueryClient();
 
   const {
@@ -44,22 +45,31 @@ export default function MyPageScreen() {
     appliedRunsData,
     historyRunsData,
     isTotalLoading,
-    isRefetching,
     refetchAppliedRuns,
     refetchCreatedRuns,
     refetchHistoryRuns,
     refetchProfile,
+    isProfileError,
+    isCreatedRunsError,
+    isAppliedRunsError,
+    isHistoryRunsError,
+    isProfileFetching,
+    isCreatedRunsFetching,
+    isAppliedRunsFetching,
+    isHistoryRunsFetching,
   } = useMyPageQueries();
 
   const router = useRouter();
 
   const onRefresh = async () => {
+    setIsManualRefreshing(true);
     await Promise.all([
       refetchProfile(),
       refetchCreatedRuns(),
       refetchAppliedRuns(),
       refetchHistoryRuns(),
     ]);
+    setIsManualRefreshing(false);
   };
 
   const handleLogout = () => {
@@ -106,7 +116,7 @@ export default function MyPageScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
+            refreshing={isManualRefreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
           />
@@ -114,26 +124,26 @@ export default function MyPageScreen() {
       >
         <ProfileSection
           data={profileData}
-          isFetching={isRefetching}
-          isError={false}
+          isFetching={isProfileFetching}
+          isError={isProfileError}
           onRetry={refetchProfile}
         />
         <CreatedRunsSection
           data={createdRunsData}
-          isFetching={isRefetching}
-          isError={false}
+          isFetching={isCreatedRunsFetching}
+          isError={isCreatedRunsError}
           onRetry={refetchCreatedRuns}
         />
         <AppliedRunsSection
           data={appliedRunsData}
-          isFetching={isRefetching}
-          isError={false}
+          isFetching={isAppliedRunsFetching}
+          isError={isAppliedRunsError}
           onRetry={refetchAppliedRuns}
         />
         <RecentHistorySection
           data={historyRunsData}
-          isFetching={isRefetching}
-          isError={false}
+          isFetching={isHistoryRunsFetching}
+          isError={isHistoryRunsError}
           onRetry={refetchHistoryRuns}
         />
       </ScrollView>
