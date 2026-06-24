@@ -68,6 +68,16 @@ export const DUMMY_DATA: RunningItem[] = [
   },
 ];
 
+export const getSessionSummary = async (sessionId: number) => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+  const baseData = DUMMY_DATA.find((item) => item.id === sessionId);
+  if (!baseData) {
+    throw new Error(`Session ID ${sessionId}를 찾을 수 없습니다.`);
+  }
+  return baseData;
+};
+
 export const searchSessions = async (params: {
   q: string;
   size: number;

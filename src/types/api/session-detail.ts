@@ -1,8 +1,8 @@
 import type { RunningItem } from "./search";
 
 export interface RoutePoint {
-  latitude: number;
-  longitude: number;
+  x: number;
+  y: number;
 }
 
 export interface SessionDetailResponse extends RunningItem {

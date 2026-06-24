@@ -20,11 +20,11 @@ export const getSessionDetail = async (
     hostMannerTemp: 36.5,
     participants: ["이민수", "박지훈", "최민석"],
     routePolyline: [
-      { latitude: 37.5271, longitude: 126.9233 },
-      { latitude: 37.5285, longitude: 126.925 },
-      { latitude: 37.5292, longitude: 126.9275 },
-      { latitude: 37.5281, longitude: 126.9299 },
-      { latitude: 37.5265, longitude: 126.9288 },
+      { x: 126.9233, y: 37.5271 },
+      { x: 126.925, y: 37.5285 },
+      { x: 126.9275, y: 37.5292 },
+      { x: 126.9299, y: 37.5281 },
+      { x: 126.9288, y: 37.5265 },
     ],
   };
 };
