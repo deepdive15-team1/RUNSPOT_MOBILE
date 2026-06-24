@@ -101,9 +101,10 @@ export const SessionDetailStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.bg,
   },
-  participantsText: {
+  iconText: {
     color: colors.white,
     fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
   },
   hostInfo: {
     gap: 4,

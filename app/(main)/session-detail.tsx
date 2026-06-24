@@ -51,11 +51,16 @@ export default function SessionDetailScreen() {
   const genderInfo = GENDER_INFO[data.genderPolicy] || GENDER_INFO.MIXED;
   const runTypeInfo = RUN_TYPE_INFO[data.runType] || RUN_TYPE_INFO.LSD;
 
+  const routePolyline = (data.routePolyline ?? []).map((point) => ({
+    latitude: point.y,
+    longitude: point.x,
+  }));
+
   const initialCamera =
-    data.routePolyline.length > 0
+    routePolyline.length > 0
       ? {
-          latitude: data.routePolyline[0].latitude,
-          longitude: data.routePolyline[0].longitude,
+          latitude: routePolyline[0].latitude,
+          longitude: routePolyline[0].longitude,
           zoom: 14,
         }
       : { latitude: 37.5271, longitude: 126.9233, zoom: 14 };
@@ -70,7 +75,7 @@ export default function SessionDetailScreen() {
         <View style={styles.mapContainer}>
           <NaverMapComponent
             camera={initialCamera}
-            routePath={data.routePolyline}
+            routePath={routePolyline}
             isScrollGesturesEnabled={true}
             isZoomGesturesEnabled={true}
           />
@@ -152,7 +157,11 @@ export default function SessionDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>호스트</Text>
             <View style={styles.hostProfile}>
-              <View style={styles.profileAvatarPlaceholder}>아이콘</View>
+              <View style={styles.profileAvatarPlaceholder}>
+                <Text style={styles.iconText}>
+                  {data.hostName ? data.hostName.slice(0, 1) : "?"}
+                </Text>
+              </View>
               <View style={styles.hostInfo}>
                 <Text style={styles.hostName}>{data.hostName}</Text>
                 <Chip
@@ -172,7 +181,7 @@ export default function SessionDetailScreen() {
             <View style={styles.participantList}>
               {data.participants?.slice(0, 3).map((participants, index) => (
                 <View key={index} style={styles.profileAvatarPlaceholder}>
-                  <Text style={styles.participantsText}>
+                  <Text style={styles.iconText}>
                     {participants.slice(0, 1)}
                   </Text>
                 </View>
@@ -185,10 +194,7 @@ export default function SessionDetailScreen() {
                   ]}
                 >
                   <Text
-                    style={[
-                      styles.participantsText,
-                      { color: colors.textSecondary },
-                    ]}
+                    style={[styles.iconText, { color: colors.textSecondary }]}
                   >
                     +{participants.length - 3}
                   </Text>

@@ -12,8 +12,10 @@ import {
 
 import SearchSvg from "../../src/assets/icon/search.svg";
 
-import { getMapMarkers } from "@/src/api/search/searchApi.index";
-import { getSessionDetail } from "@/src/api/session-detail/sessionDetailApi.index";
+import {
+  getMapMarkers,
+  getSessionSummary,
+} from "@/src/api/search/searchApi.index";
 import { Input } from "@/src/components/common/Input/Input";
 import Chip from "@/src/components/common/chip";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
@@ -46,7 +48,7 @@ export default function SearchScreen() {
 
   const { data: selectedCourse, isFetching: isDetailLoading } = useQuery({
     queryKey: ["sessionDetail", selectedSessionId],
-    queryFn: () => getSessionDetail(selectedSessionId!),
+    queryFn: () => getSessionSummary(selectedSessionId!),
     enabled: !!selectedSessionId,
     staleTime: CACHE_TIME_5_MIN,
   });
