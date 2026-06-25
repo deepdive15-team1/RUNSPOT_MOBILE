@@ -1,13 +1,15 @@
 import { useRouter } from "expo-router";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
 
 import { Button } from "@/src/components/common/button/Button";
 import { HomeHeader } from "@/src/components/home/HomeHeader";
 import { NearbyList } from "@/src/components/nearbyList/NearbyList";
 import { colors, spacing } from "@/src/constants";
+import { useCurrentCoordinates } from "@/src/hooks/useCurrentCoordinates";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const coordinates = useCurrentCoordinates();
 
   return (
     <ScrollView
@@ -28,7 +30,13 @@ export default function HomeScreen() {
         </Button>
       </View>
 
-      <NearbyList x={127.0017} y={37.5642} />
+      {coordinates ? (
+        <NearbyList x={coordinates.x} y={coordinates.y} />
+      ) : (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color={colors.main} />
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -48,5 +56,10 @@ const styles = StyleSheet.create({
     width: "90%",
     maxWidth: 330,
     alignSelf: "center",
+  },
+  loadingBox: {
+    minHeight: 120,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
