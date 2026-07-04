@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { View, Text, ActivityIndicator } from "react-native";
 
 import { Button } from "../common/button/Button";
@@ -151,10 +152,11 @@ export const CreatedRunsSection = ({
   isError,
   onRetry,
 }: SectionsProps<CreatedRunning[]>) => {
-  // TODO: 호스트 전용 러닝 관리 페이지 네비게이션 연결
-  const handleManageRun = (runningId: number) => {
-    // eslint-disable-next-line no-console
-    console.log(`러닝 관리 페이지 이동: ${runningId}`);
+  const handleManageRun = (sessionId: number, runTitle: string) => {
+    router.push({
+      pathname: "/manage-participants",
+      params: { id: sessionId, title: runTitle },
+    });
   };
 
   if (isFetching && runs.length === 0) {
@@ -192,7 +194,7 @@ export const CreatedRunsSection = ({
                 <Button
                   variant="primary"
                   size="sm"
-                  onPress={() => handleManageRun(run.id)}
+                  onPress={() => handleManageRun(run.id, run.title)}
                 >
                   관리
                 </Button>
