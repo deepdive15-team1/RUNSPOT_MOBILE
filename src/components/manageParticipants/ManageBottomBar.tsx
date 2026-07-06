@@ -3,29 +3,37 @@ import { StyleSheet, View } from "react-native";
 import { Button } from "../common/button/Button";
 
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { RunningStatus } from "@/src/types/api/mypage";
 
 interface ManageBottomBarProps {
   sessionId: number;
+  isClosed: RunningStatus;
   onClose: (id: number) => void;
   onCheckStart: (id: number) => void;
+  isCloseSession: boolean;
 }
 
 export function ManageBottomBar({
   sessionId,
+  isClosed,
   onClose,
   onCheckStart,
+  isCloseSession,
 }: ManageBottomBarProps) {
   return (
     <View style={styles.buttonRow}>
-      <Button
-        variant="neutral"
-        flex={1}
-        onPress={() => onClose(sessionId)}
-        wrapperStyle={styles.rejectButton}
-        textStyle={styles.rejectButtonText}
-      >
-        모집 마감
-      </Button>
+      {isClosed === "OPEN" && (
+        <Button
+          variant="neutral"
+          flex={1}
+          onPress={() => onClose(sessionId)}
+          wrapperStyle={styles.rejectButton}
+          textStyle={styles.rejectButtonText}
+          disabled={isCloseSession}
+        >
+          {isCloseSession ? "마감 중.." : "모집 마감"}
+        </Button>
+      )}
 
       <Button
         variant="primary"

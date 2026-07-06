@@ -1,9 +1,15 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { View, Text, StyleSheet } from "react-native";
 
 import { Button } from "../common/button/Button";
 
 import { ParticipantProfile } from "./ParticipantProfile";
 
+import {
+  acceptParticipant,
+  rejectParticipant,
+} from "@/src/api/manageParticipants/manageParticipants.index";
+import { participantKeys } from "@/src/api/manageParticipants/manageParticipants.keys";
 import AcceptSvg from "@/src/assets/icon/manage-Participants/accept.svg";
 import RejectSvg from "@/src/assets/icon/manage-Participants/reject.svg";
 import {
@@ -17,15 +23,46 @@ import { JoinRequest } from "@/src/types/api/manageParticipants";
 
 interface RequestedParticipantCardProps {
   participant: JoinRequest;
-  onAccept: (id: number) => void;
-  onReject: (id: number) => void;
+  sessionId: number;
 }
 
 export const RequestedParticipantCard = ({
   participant,
-  onAccept,
-  onReject,
+  sessionId,
 }: RequestedParticipantCardProps) => {
+  const queryClient = useQueryClient();
+
+  const { mutate: acceptMutate, isPending: isAccepting } = useMutation({
+    mutationFn: (participantId: number) =>
+      acceptParticipant(sessionId, participantId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: participantKeys.all(sessionId),
+      });
+    },
+
+    onError: (err) => {
+      console.error("수락 실패", err);
+    },
+  });
+
+  const { mutate: rejectMutate, isPending: isRejecting } = useMutation({
+    mutationFn: (participantId: number) =>
+      rejectParticipant(sessionId, participantId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: participantKeys.all(sessionId),
+      });
+    },
+
+    onError: (err) => {
+      console.error("거절 실패", err);
+    },
+  });
+
+  const isSubmitting = isAccepting || isRejecting;
   return (
     <View style={styles.cardContainer}>
       {/* Header */}
@@ -46,7 +83,8 @@ export const RequestedParticipantCard = ({
           flex={1}
           rounded
           startIcon={<RejectSvg width={18} height={18} />}
-          onPress={() => onReject(participant.id)}
+          onPress={() => rejectMutate(participant.id)}
+          disabled={isSubmitting}
           wrapperStyle={styles.rejectButton}
           textStyle={styles.rejectButtonText}
         >
@@ -58,7 +96,8 @@ export const RequestedParticipantCard = ({
           flex={1}
           rounded
           startIcon={<AcceptSvg width={18} height={18} />}
-          onPress={() => onAccept(participant.id)}
+          onPress={() => acceptMutate(participant.id)}
+          disabled={isSubmitting}
           wrapperStyle={styles.acceptButton}
           textStyle={styles.acceptButtonText}
         >
