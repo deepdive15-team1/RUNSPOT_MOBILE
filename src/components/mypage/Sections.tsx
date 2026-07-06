@@ -12,8 +12,8 @@ import CheckIcon from "@/src/assets/icon/my-page/check.svg";
 import MannerIcon from "@/src/assets/icon/my-page/manner.svg";
 import Chip from "@/src/components/common/chip";
 import { colors } from "@/src/constants/index";
-import type { UserProfile } from "@/src/types/api/mypage";
-import { CreatedRunning } from "@/src/types/api/mypage";
+import { AGEGROUPMAP, GENDER_MAP } from "@/src/constants/mappings";
+import { CreatedRunning, UserProfile } from "@/src/types/api/mypage";
 import {
   AppliedRunningsResponse,
   RecentRunningsResponse,
@@ -80,23 +80,9 @@ export const ProfileSection = ({
     );
   }
 
-  // 서버 데이터를 한글로 번역하기 위한 매핑
-  const genderMap: Record<string, string> = {
-    MALE: "남성",
-    FEMALE: "여성",
-  };
-
-  const ageGroupMap: Record<string, string> = {
-    "10S": "10대",
-    "20S": "20대",
-    "30S": "30대",
-    "40S": "40대",
-    "50S": "50대",
-  };
-
   // 매핑 데이터에 없으면 원본 데이터를 그대로 보여줌
-  const displayGender = genderMap[profile.gender] || profile.gender;
-  const displayAge = ageGroupMap[profile.ageGroup] || profile.ageGroup;
+  const displayGender = GENDER_MAP[profile.gender] || profile.gender;
+  const displayAge = AGEGROUPMAP[profile.ageGroup] || profile.ageGroup;
 
   // 이름이 없을 경우 에러 처리
   const displayName = profile.name || "런닝메이트";
@@ -185,6 +171,11 @@ export const CreatedRunsSection = ({
         <EmptyState text="생성한 러닝이 없습니다." />
       ) : (
         <View style={styles.cardListWrapper}>
+          {/* TODO: [마이페이지 UI 개선] 
+              1. CANCELED 상태인 방은 목록에서 보이지 않도록 .filter 적용 필요
+              2. subtitle에 상태값(OPEN, CLOSED 등)에 따른 텍스트 변환 헬퍼 함수 적용 필요
+              3. FINISHED 상태일 경우 rightElement의 '관리' 버튼을 '평가하기' 버튼으로 변경 필요
+          */}
           {runs.map((run) => (
             <MyPageCard
               key={run.id}
