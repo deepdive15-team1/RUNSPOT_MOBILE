@@ -11,3 +11,25 @@ export const getParticipantsByStatus = async (
   );
   return response.data;
 };
+
+export const acceptParticipant = async (
+  sessionId: number,
+  participationId: number,
+): Promise<void> => {
+  await axiosInstance.post(
+    `sessions/${sessionId}/join-requests/${participationId}/approve`,
+  );
+};
+
+export const rejectParticipant = async (
+  sessionId: number,
+  participationId: number,
+): Promise<void> => {
+  await axiosInstance.post(
+    `sessions/${sessionId}/join-requests/${participationId}/reject`,
+  );
+};
+
+export const closeSession = async (sessionId: number): Promise<void> => {
+  await axiosInstance.post(`sessions/${sessionId}/close`);
+};

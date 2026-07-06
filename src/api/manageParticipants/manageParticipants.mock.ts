@@ -74,3 +74,24 @@ export const getParticipantsByStatus = async (
 
   return new Promise((resolve) => setTimeout(() => resolve([]), 1200));
 };
+
+export const acceptParticipant = async (
+  _sessionId: number,
+  _participantId: number,
+): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return;
+};
+
+export const rejectParticipant = async (
+  _sessionId: number,
+  _participantId: number,
+): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return;
+};
+
+export const closeSession = async (_sessionId: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return;
+};
