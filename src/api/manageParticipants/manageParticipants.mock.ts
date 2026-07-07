@@ -1,6 +1,6 @@
 import { JoinRequest } from "@/src/types/api/manageParticipants";
 
-export const mockRequestedMembers: JoinRequest[] = [
+let mockRequestedMembers: JoinRequest[] = [
   {
     id: 101,
     userId: 1,
@@ -23,7 +23,7 @@ export const mockRequestedMembers: JoinRequest[] = [
   },
 ];
 
-export const mockApprovedMembers: JoinRequest[] = [
+const mockApprovedMembers: JoinRequest[] = [
   {
     id: 103,
     userId: 3,
@@ -62,36 +62,48 @@ export const getParticipantsByStatus = async (
 ): Promise<JoinRequest[]> => {
   if (status === "REQUESTED") {
     return new Promise((resolve) =>
-      setTimeout(() => resolve(mockRequestedMembers), 1200),
+      setTimeout(() => resolve(mockRequestedMembers), 800),
     );
   }
 
   if (status === "APPROVED") {
     return new Promise((resolve) =>
-      setTimeout(() => resolve(mockApprovedMembers), 1200),
+      setTimeout(() => resolve(mockApprovedMembers), 800),
     );
   }
 
-  return new Promise((resolve) => setTimeout(() => resolve([]), 1200));
+  return new Promise((resolve) => setTimeout(() => resolve([]), 800));
 };
 
 export const acceptParticipant = async (
   _sessionId: number,
-  _participantId: number,
+  participantId: number,
 ): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
-  return;
+
+  const targetIndex = mockRequestedMembers.findIndex(
+    (m) => m.id === participantId,
+  );
+  if (targetIndex !== -1) {
+    const [targetMember] = mockRequestedMembers.splice(targetIndex, 1);
+    targetMember.status = "APPROVED";
+    mockApprovedMembers.push(targetMember);
+  }
 };
 
 export const rejectParticipant = async (
   _sessionId: number,
-  _participantId: number,
+  participantId: number,
 ): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
-  return;
+
+  mockRequestedMembers = mockRequestedMembers.filter(
+    (m) => m.id !== participantId,
+  );
 };
 
 export const closeSession = async (_sessionId: number): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
-  return;
+
+  mockRequestedMembers = [];
 };
