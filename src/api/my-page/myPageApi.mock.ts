@@ -11,10 +11,10 @@ import {
 
 // 마이페이지 프로필 데이터
 export const MOCK_PROFILE: UserProfile = {
-  id: 1,
+  userId: 1,
   name: "러너김",
-  ageGroup: "30대",
-  gender: "남성",
+  ageGroup: "20S",
+  gender: "MALE",
   mannerTemp: 36.5,
   weeklyRuns: 3,
   avgPaceMinPerKm: "5:45 min/km",
