@@ -12,6 +12,10 @@ import {
 } from "react-native";
 
 import { signup } from "@/src/api/auth/authApi.index";
+import {
+  ConsentSection,
+  type ConsentState,
+} from "@/src/components/auth/ConsentSection";
 import { Input } from "@/src/components/common/Input/Input";
 import { Button } from "@/src/components/common/button/Button";
 import { Select } from "@/src/components/common/select";
@@ -51,6 +55,10 @@ export default function SignupScreen() {
   const [gender, setGender] = useState<string | "">("");
   const [weeklyRuns, setWeeklyRuns] = useState("");
   const [avgPaceMinPerKm, setAvgPaceMinPerKm] = useState("");
+  const [consent, setConsent] = useState<ConsentState>({
+    termsAgreed: false,
+    privacyAgreed: false,
+  });
   const [error, setError] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -96,6 +104,11 @@ export default function SignupScreen() {
       next.avgPaceMinPerKm = "평균 페이스를 입력해주세요.";
     } else if (paceSeconds === null) {
       next.avgPaceMinPerKm = "mm:ss 형식으로 입력해주세요. (예: 05:30)";
+    }
+
+    if (!consent.termsAgreed || !consent.privacyAgreed) {
+      next.consent =
+        "필수 약관에 동의해 주세요. (이용약관, 개인정보 수집·이용)";
     }
 
     if (Object.keys(next).length > 0) {
@@ -227,6 +240,21 @@ export default function SignupScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             errorMessage={error.avgPaceMinPerKm}
+          />
+
+          <ConsentSection
+            value={consent}
+            onChange={(next) => {
+              setConsent(next);
+              if (error.consent) {
+                setError((prev) => {
+                  const nextErrors = { ...prev };
+                  delete nextErrors.consent;
+                  return nextErrors;
+                });
+              }
+            }}
+            errorMessage={error.consent}
           />
 
           {error.form ? (
