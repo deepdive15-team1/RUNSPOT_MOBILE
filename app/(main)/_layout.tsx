@@ -108,6 +108,24 @@ export default function MainLayout() {
           headerLeft: () => <StackHeaderBack />,
         }}
       />
+      <Tabs.Screen
+        name="attendance"
+        options={{
+          href: null,
+          title: "출석 체크",
+          tabBarStyle: { display: "none" },
+          headerLeft: () => <StackHeaderBack />,
+        }}
+      />
+      <Tabs.Screen
+        name="manage-attendance"
+        options={{
+          href: null,
+          title: "참여자 관리",
+          tabBarStyle: { display: "none" },
+          headerLeft: () => <StackHeaderBack />,
+        }}
+      />
     </Tabs>
   );
 }

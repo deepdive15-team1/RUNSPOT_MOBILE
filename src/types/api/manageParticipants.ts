@@ -1,3 +1,4 @@
+import { AttendanceStatus } from "./attendance";
 import { Gender } from "./auth";
 
 export type RequestStatus = "REQUESTED" | "APPROVED" | "REJECTED" | "CANCELED";
@@ -8,7 +9,7 @@ export interface JoinRequest {
   userName: string;
   userGender: Gender;
   status: RequestStatus;
-  attendanceStatus: string;
+  attendanceStatus: AttendanceStatus;
   messageToHost: string;
   requestedAt: string;
 }
