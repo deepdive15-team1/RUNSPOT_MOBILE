@@ -13,7 +13,11 @@ import MannerIcon from "@/src/assets/icon/my-page/manner.svg";
 import Chip from "@/src/components/common/chip";
 import { colors } from "@/src/constants/index";
 import { AGEGROUPMAP, GENDER_MAP } from "@/src/constants/mappings";
-import { CreatedRunning, UserProfile } from "@/src/types/api/mypage";
+import {
+  CreatedRunning,
+  RunningStatus,
+  UserProfile,
+} from "@/src/types/api/mypage";
 import {
   AppliedRunningsResponse,
   RecentRunningsResponse,
@@ -155,11 +159,40 @@ export const CreatedRunsSection = ({
 }: SectionsProps<CreatedRunning[]>) => {
   const router = useRouter();
 
-  const handleManageRun = (sessionId: number, runTitle: string) => {
-    router.push({
-      pathname: "/manage-participants",
-      params: { id: sessionId, title: runTitle },
-    });
+  const handleManageRun = (
+    sessionId: number,
+    runTitle: string,
+    status: RunningStatus,
+  ) => {
+    switch (status) {
+      case "OPEN":
+        // 모집 중인 상태: 참여자 관리 페이지
+        router.push({
+          pathname: "/manage-participants",
+          params: { id: sessionId, title: runTitle },
+        });
+        break;
+
+      case "CLOSED":
+        // 마감된 상태: 출석 페이지
+        router.push({
+          pathname: "/attendance",
+          params: { id: sessionId, title: runTitle },
+        });
+        break;
+
+      case "IN_PROGRESS":
+        // 러닝 진행 중인 상태: 출석 체크/관리 페이지
+        router.push({
+          pathname: "/manage-attendance",
+          params: { id: sessionId, title: runTitle },
+        });
+        break;
+
+      default:
+        console.warn("알 수 없는 러닝 상태입니다:", status);
+        break;
+    }
   };
 
   const handleRateMembers = (sessionId: number) => {
@@ -213,7 +246,9 @@ export const CreatedRunsSection = ({
                   <Button
                     variant="primary"
                     size="sm"
-                    onPress={() => handleManageRun(run.id, run.title)}
+                    onPress={() =>
+                      handleManageRun(run.id, run.title, run.status)
+                    }
                   >
                     관리
                   </Button>
