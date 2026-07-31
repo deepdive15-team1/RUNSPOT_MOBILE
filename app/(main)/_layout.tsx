@@ -126,6 +126,24 @@ export default function MainLayout() {
           headerLeft: () => <StackHeaderBack />,
         }}
       />
+      <Tabs.Screen
+        name="host-rating"
+        options={{
+          title: "호스트 평가",
+          href: null,
+          tabBarStyle: { display: "none" },
+          headerLeft: () => <StackHeaderBack />,
+        }}
+      />
+      <Tabs.Screen
+        name="member-rating"
+        options={{
+          title: "멤버 평가",
+          href: null,
+          tabBarStyle: { display: "none" },
+          headerLeft: () => <StackHeaderBack />,
+        }}
+      />
     </Tabs>
   );
 }
