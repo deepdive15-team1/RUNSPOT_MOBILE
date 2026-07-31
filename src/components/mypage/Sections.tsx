@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import { View, Text, ActivityIndicator } from "react-native";
 
 import { Button } from "../common/button/Button";
@@ -132,16 +132,40 @@ const StatBox = ({ label, value }: { label: string; value: string }) => (
   </View>
 );
 
+const getRunStatusText = (run: CreatedRunning) => {
+  switch (run.status) {
+    case "OPEN":
+      return `모집 중 (${run.currentParticipants}/${run.capacity}명)`;
+    case "CLOSED":
+      return "모집 마감";
+    case "IN_PROGRESS":
+      return "러닝 진행 중";
+    case "FINISHED":
+      return "러닝 종료 (평가 대기)";
+    default:
+      return "";
+  }
+};
+
 export const CreatedRunsSection = ({
   data: runs = [],
   isFetching,
   isError,
   onRetry,
 }: SectionsProps<CreatedRunning[]>) => {
+  const router = useRouter();
+
   const handleManageRun = (sessionId: number, runTitle: string) => {
     router.push({
       pathname: "/manage-participants",
       params: { id: sessionId, title: runTitle },
+    });
+  };
+
+  const handleRateMembers = (sessionId: number) => {
+    router.push({
+      pathname: "/member-rating",
+      params: { sessionId },
     });
   };
 
@@ -171,24 +195,29 @@ export const CreatedRunsSection = ({
         <EmptyState text="생성한 러닝이 없습니다." />
       ) : (
         <View style={styles.cardListWrapper}>
-          {/* TODO: [마이페이지 UI 개선] 
-              1. CANCELED 상태인 방은 목록에서 보이지 않도록 .filter 적용 필요
-              2. subtitle에 상태값(OPEN, CLOSED 등)에 따른 텍스트 변환 헬퍼 함수 적용 필요
-              3. FINISHED 상태일 경우 rightElement의 '관리' 버튼을 '평가하기' 버튼으로 변경 필요
-          */}
           {runs.map((run) => (
             <MyPageCard
               key={run.id}
               title={run.title}
-              subtitle={`모집 중 (${run.currentParticipants}/${run.capacity}명)`}
+              subtitle={getRunStatusText(run)}
               rightElement={
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onPress={() => handleManageRun(run.id, run.title)}
-                >
-                  관리
-                </Button>
+                run.status === "FINISHED" ? (
+                  <Button
+                    variant="outlinePrimary"
+                    size="sm"
+                    onPress={() => handleRateMembers(run.id)}
+                  >
+                    평가하기
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onPress={() => handleManageRun(run.id, run.title)}
+                  >
+                    관리
+                  </Button>
+                )
               }
             />
           ))}
@@ -290,10 +319,13 @@ export const RecentHistorySection = ({
   onRetry,
 }: SectionsProps<RecentRunningsResponse>) => {
   const runs = data?.recentRunnings || [];
-  // TODO: 러닝 완료 후 평가 페이지 네비게이션 연결
-  const handleRate = (id: number) => {
-    // eslint-disable-next-line no-console
-    console.log("평가 페이지로 이동, runningId:", id);
+  const router = useRouter();
+
+  const handleRateHost = (sessionId: number) => {
+    router.push({
+      pathname: "/host-rating",
+      params: { sessionId },
+    });
   };
 
   if (isFetching && runs.length === 0) {
@@ -344,7 +376,7 @@ export const RecentHistorySection = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onPress={() => handleRate(run.runningId)}
+                  onPress={() => handleRateHost(run.runningId)}
                 >
                   평가하기
                 </Button>
