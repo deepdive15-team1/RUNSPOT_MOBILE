@@ -1,3 +1,5 @@
+import { DUMMY_DATA } from "../search/searchApi.mock";
+
 import type {
   UserProfile,
   AppliedRunning,
@@ -25,9 +27,9 @@ export const MOCK_PROFILE: UserProfile = {
 // 내가 만든 러닝
 export const MOCK_CREATED: CreatedRunningResponse = [
   {
-    id: 1,
+    id: DUMMY_DATA[0]?.id || 1,
     hostUserId: 1,
-    title: "여의도 야간 러닝",
+    title: DUMMY_DATA[0]?.title || "여의도 야간 러닝",
     runType: "REGULAR",
     locationName: "여의도 한강공원 이벤트광장",
     locationX: 126.9343,
@@ -47,9 +49,9 @@ export const MOCK_CREATED: CreatedRunningResponse = [
     updatedAt: "2026-05-31T09:00:00Z",
   },
   {
-    id: 2,
+    id: DUMMY_DATA[1]?.id || 1,
     hostUserId: 1,
-    title: "반포 달빛 무지개 분수 런",
+    title: DUMMY_DATA[1]?.title || "여의도 야간 러닝",
     runType: "REGULAR",
     locationName: "반포 한강공원",
     locationX: 126.9959,
@@ -61,7 +63,7 @@ export const MOCK_CREATED: CreatedRunningResponse = [
     capacity: 10,
     currentParticipants: 10,
     genderPolicy: "MALE_ONLY",
-    status: "CLOSED",
+    status: "FINISHED",
     createdAt: "2026-05-30T15:00:00Z",
     updatedAt: "2026-05-30T15:00:00Z",
   },
@@ -77,8 +79,8 @@ export const MOCK_APPLIED: AppliedRunning[] = [
     approveStatus: "PENDING",
   },
   {
-    runningId: 2,
-    title: "탄천 자전거도로 런",
+    runningId: DUMMY_DATA[1]?.id || 2,
+    title: DUMMY_DATA[1]?.title || "탄천 자전거도로 런",
     date: "2026-10-26",
     time: "08:30",
     approveStatus: "APPROVED",
@@ -96,19 +98,19 @@ export const MOCK_APPLIED: AppliedRunning[] = [
 // 최근 참여 내역
 export const MOCK_HISTORY: RecentRunning[] = [
   {
-    runningId: 1,
-    title: "반포 한강 런",
+    runningId: DUMMY_DATA[2]?.id || 3,
+    title: DUMMY_DATA[2]?.title || "반포 한강 런",
     date: "2026-10-20",
     resultStatus: "DONE",
   },
   {
-    runningId: 2,
+    runningId: 104,
     title: "올림픽공원 러닝",
     date: "2026-10-18",
     resultStatus: "DONE",
   },
   {
-    runningId: 3,
+    runningId: 105,
     title: "석촌호수 런",
     date: "2026-10-15",
     resultStatus: "DONE",
