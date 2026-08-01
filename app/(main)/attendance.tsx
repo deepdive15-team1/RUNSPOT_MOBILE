@@ -16,10 +16,11 @@ import {
   getAttendance,
   updateAttendance,
 } from "@/src/api/attendance/attendanceApi.index";
+import { startSession } from "@/src/api/session/sessionApi.index";
 import { getSessionDetail } from "@/src/api/session-detail/sessionDetailApi.index";
 import AttendanceSvg from "@/src/assets/icon/attendance/attendance.svg";
 import AttendanceCalendarSvg from "@/src/assets/icon/attendance/attendanceCalendar.svg";
-import AttendanceMemberCard from "@/src/components/attendance/AttendanceMemberCard";
+import AttendanceListItem from "@/src/components/attendance/AttendanceListItem";
 import { Button } from "@/src/components/common/button/Button";
 import Chip from "@/src/components/common/chip";
 import {
@@ -87,19 +88,25 @@ export default function AttendanceScreen() {
   // Promise.all을 활용한 출석 상태 병렬 업데이트
   const updateAttendanceMutation = useMutation({
     mutationFn: async (changes: Record<number, AttendanceStatus>) => {
-      const promises = Object.entries(changes).map(([pId, status]) => {
-        return updateAttendance({
-          sessionId,
-          participationId: Number(pId),
-          status,
-        });
-      });
-      return Promise.all(promises);
+      const attendancePromises = Object.entries(changes).map(
+        ([pId, status]) => {
+          return updateAttendance({
+            sessionId,
+            participationId: Number(pId),
+            status,
+          });
+        },
+      );
+
+      const sessionUpdatePromise = startSession(sessionId);
+
+      return Promise.all([...attendancePromises, sessionUpdatePromise]);
     },
 
     onSuccess: () => {
       setPendingChanges({});
       queryClient.invalidateQueries({ queryKey: ["attendance", sessionId] });
+      queryClient.invalidateQueries({ queryKey: ["sessionDetail", sessionId] });
 
       // 성공 시 출석 관리 화면 이동
       router.push({
@@ -186,7 +193,7 @@ export default function AttendanceScreen() {
             isLastItem && styles.flatListLastItem,
           ]}
         >
-          <AttendanceMemberCard
+          <AttendanceListItem
             participant={item}
             isLastItem={isLastItem}
             onToggleStatus={handleToggleStatus}
@@ -275,7 +282,7 @@ export default function AttendanceScreen() {
       {/* MIDDLE 영역 */}
       <FlatList
         data={displayMembers}
-        keyExtractor={(item) => item.userId.toString()}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderAttendanceItem}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -297,17 +304,7 @@ export default function AttendanceScreen() {
           fullWidth
           disabled={updateAttendanceMutation.isPending}
           onPress={() => {
-            const hasChanges = Object.keys(pendingChanges).length > 0;
-
-            // 변경 내역 존재 여부에 따른 분기 처리 (내역 없으면 즉시 관리 화면 이동)
-            if (hasChanges) {
-              updateAttendanceMutation.mutate(pendingChanges);
-            } else {
-              router.push({
-                pathname: "/manage-attendance",
-                params: { id: sessionId },
-              });
-            }
+            updateAttendanceMutation.mutate(pendingChanges);
           }}
         >
           {updateAttendanceMutation.isPending
@@ -339,7 +336,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgSecondary,
   },
 
-  // ============ Header ============
+  //  Header
   headerTitleContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -361,7 +358,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  // ============ FlatList Item ============
+  //  FlatList Item
   flatListItem: {
     backgroundColor: colors.bg,
   },
@@ -376,7 +373,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
-  // ============ List Content ============
+  //  List Content
   scrollContent: {
     padding: 20,
     paddingBottom: spacing.xxl,
@@ -398,7 +395,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
 
-  // ============ Info Box ============
+  //  Info Box
   infoBox: {
     backgroundColor: colors.mainLight,
     padding: spacing.base,
@@ -410,7 +407,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
-  // ============ Bottom Area ============
+  //  Bottom Area
   bottomFixedArea: {
     backgroundColor: colors.bg,
     paddingHorizontal: 20,
