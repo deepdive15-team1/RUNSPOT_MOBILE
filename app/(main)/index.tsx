@@ -24,7 +24,7 @@ export default function HomeScreen() {
           variant="primary"
           size="lg"
           fullWidth
-          onPress={() => router.push("/(main)/create-session")}
+          onPress={() => router.push("/create-session")}
         >
           러닝 세션 개설하기
         </Button>

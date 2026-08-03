@@ -193,7 +193,7 @@ export default function DrawRunningCourseScreen() {
 
     const task = InteractionManager.runAfterInteractions(() => {
       requestAnimationFrame(() => {
-        router.replace("/(main)/create-session");
+        router.replace("/create-session");
       });
     });
 
