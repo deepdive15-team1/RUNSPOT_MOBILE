@@ -1,5 +1,6 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { nearbySession } from "@/src/api/nearbySession/nearbySessionApi.index";
@@ -12,7 +13,6 @@ import {
   fontWeights,
   spacing,
 } from "@/src/constants";
-import type { NearbySessionResponse } from "@/src/types/api/nearbySession";
 
 export interface NearbyListProps {
   /** 주변 세션 검색 경도 */
@@ -23,29 +23,21 @@ export interface NearbyListProps {
 
 export function NearbyList({ x, y }: NearbyListProps) {
   const router = useRouter();
-  const [sessions, setSessions] = useState<NearbySessionResponse[] | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setSessions(null);
-    (async () => {
-      try {
-        const list = await nearbySession({ x, y, size: 3 });
-        if (!cancelled) setSessions(list);
-      } catch {
-        if (!cancelled) setSessions([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [x, y]);
+  const {
+    data: sessions,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: ["nearbySessions", x, y],
+    queryFn: () => nearbySession({ x, y, size: 3 }),
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   return (
     <View style={styles.outer}>
