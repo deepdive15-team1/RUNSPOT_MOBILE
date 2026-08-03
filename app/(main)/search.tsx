@@ -117,7 +117,7 @@ export default function SearchScreen() {
       />
       <View style={styles.topOverlay}>
         {/* 실제 검색은 search-result 페이지에서 실행 */}
-        <Pressable onPress={() => router.push("/(main)/search-result")}>
+        <Pressable onPress={() => router.push("/search-result")}>
           <View pointerEvents="none">
             <Input
               placeholder="지역 또는 크루 검색"

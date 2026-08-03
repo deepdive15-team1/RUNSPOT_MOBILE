@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -60,6 +60,20 @@ export default function MyPageScreen() {
   } = useMyPageQueries();
 
   const router = useRouter();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchProfile();
+      refetchCreatedRuns();
+      refetchAppliedRuns();
+      refetchHistoryRuns();
+    }, [
+      refetchProfile,
+      refetchCreatedRuns,
+      refetchAppliedRuns,
+      refetchHistoryRuns,
+    ]),
+  );
 
   const onRefresh = async () => {
     setIsManualRefreshing(true);

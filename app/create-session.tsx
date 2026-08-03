@@ -344,7 +344,7 @@ export default function CreateSessionScreen() {
               variant="outline"
               size="sm"
               flex
-              onPress={() => router.push("/(main)/draw-running-course")}
+              onPress={() => router.push("/draw-running-course")}
             >
               러닝 코스 그리기
             </Button>

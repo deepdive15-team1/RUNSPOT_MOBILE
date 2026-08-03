@@ -108,11 +108,33 @@ export default function AttendanceScreen() {
       queryClient.invalidateQueries({ queryKey: ["attendance", sessionId] });
       queryClient.invalidateQueries({ queryKey: ["sessionDetail", sessionId] });
 
-      // 성공 시 출석 관리 화면 이동
-      router.push({
-        pathname: "/manage-attendance",
-        params: { id: sessionId },
-      });
+      // 러닝 시작 성공 알림 띄우기
+      Alert.alert(
+        "러닝 시작",
+        "출석 체크가 완료되었습니다 \n안전하게 러닝을 즐겨보세요! ",
+        [
+          {
+            text: "확인",
+            onPress: () => {
+              /*
+               * TODO: [상세 API에 status 필드 추가 시 작업]
+               * 이전 화면(출석 체크)으로의 비정상적인 접근 방어를 위해 마이페이지로 임시 우회
+               * 추후 백엔드 구조 변경 시 아래 주석 해제 + manage-attendance 화면에 커스텀 뒤로가기 적용
+               *
+               * router.replace({
+               *   pathname: "/manage-attendance",
+               *   params: { id: sessionId },
+               * });
+               */
+
+              // 러닝 시작 후 출석 체크 화면으로 돌아가지 못하도록 마이페이지로 강제 이동
+              router.replace("/(main)/my-page");
+            },
+          },
+        ],
+        // 사용자가 알림창 바깥을 터치해서 무시하는 것을 방지
+        { cancelable: false },
+      );
     },
     onError: (error) => {
       console.error("출석 업데이트 중 에러 발생:", error);

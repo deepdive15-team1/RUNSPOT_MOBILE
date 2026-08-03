@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 
-import { StackHeaderBack } from "@/src/components/header";
 import { colors, fontSizes, fontWeights } from "@/src/constants";
 
 type IonName = ComponentProps<typeof Ionicons>["name"];
@@ -14,6 +13,8 @@ function tabIcon(name: IonName) {
 }
 
 export default function MainLayout() {
+  const isChatEnabled = process.env.EXPO_PUBLIC_ENABLE_CHAT === "true";
+
   return (
     <Tabs
       screenOptions={{
@@ -51,12 +52,18 @@ export default function MainLayout() {
           tabBarIcon: tabIcon("search"),
         }}
       />
+      {/*
+       * TODO: 1차 MVP 배포 스펙에서 채팅 기능 제외
+       * 사유: 채팅 기능 구현 연기
+       * 해제 조건: 1차 배포 후 기능 구현 시 EXPO_PUBLIC_ENABLE_CHAT 제거 및 활성화
+       */}
       <Tabs.Screen
         name="chat"
         options={{
           title: "채팅",
           tabBarLabel: "채팅",
           tabBarIcon: tabIcon("chatbubbles-outline"),
+          href: isChatEnabled ? "/chat" : null,
         }}
       />
       <Tabs.Screen
@@ -66,82 +73,6 @@ export default function MainLayout() {
           tabBarLabel: "마이",
           tabBarIcon: tabIcon("person-outline"),
           headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="create-session"
-        options={{
-          title: "러닝 모임 만들기",
-          href: null,
-          headerLeft: () => <StackHeaderBack />,
-        }}
-      />
-      <Tabs.Screen
-        name="draw-running-course"
-        options={{
-          title: "러닝 코스 그리기",
-          href: null,
-          headerLeft: () => <StackHeaderBack />,
-        }}
-      />
-      <Tabs.Screen
-        name="search-result"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-      <Tabs.Screen
-        name="session-detail"
-        options={{
-          href: null,
-          title: "상세 정보",
-          headerLeft: () => <StackHeaderBack />,
-        }}
-      />
-      <Tabs.Screen
-        name="manage-participants"
-        options={{
-          href: null,
-          title: "참여자 관리",
-          tabBarStyle: { display: "none" },
-          headerLeft: () => <StackHeaderBack />,
-        }}
-      />
-      <Tabs.Screen
-        name="attendance"
-        options={{
-          href: null,
-          title: "출석 체크",
-          tabBarStyle: { display: "none" },
-          headerLeft: () => <StackHeaderBack />,
-        }}
-      />
-      <Tabs.Screen
-        name="manage-attendance"
-        options={{
-          href: null,
-          title: "참여자 관리",
-          tabBarStyle: { display: "none" },
-          headerLeft: () => <StackHeaderBack />,
-        }}
-      />
-      <Tabs.Screen
-        name="host-rating"
-        options={{
-          title: "호스트 평가",
-          href: null,
-          tabBarStyle: { display: "none" },
-          headerLeft: () => <StackHeaderBack />,
-        }}
-      />
-      <Tabs.Screen
-        name="member-rating"
-        options={{
-          title: "멤버 평가",
-          href: null,
-          tabBarStyle: { display: "none" },
-          headerLeft: () => <StackHeaderBack />,
         }}
       />
     </Tabs>

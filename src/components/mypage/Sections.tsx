@@ -275,6 +275,8 @@ export const AppliedRunsSection = ({
     console.log(`${runningId}번 채팅 열기`);
   };
 
+  const isChatEnabled = process.env.EXPO_PUBLIC_ENABLE_CHAT === "true";
+
   if (isFetching && runs.length === 0) {
     return (
       <View style={[styles.sectionContainer, styles.centerBox]}>
@@ -320,7 +322,12 @@ export const AppliedRunsSection = ({
                     }
                     size="small"
                   />
-                  {run.chatEnabled && (
+
+                  {/*
+                   * TODO: 1차 배포 후 기능 구현 전까지 채팅 기능 비활성화
+                   * isChatEnabled 활성화 시 주석 제거 혹은 유지
+                   */}
+                  {isChatEnabled && run.chatEnabled && (
                     <Button
                       variant="outline"
                       size="sm"

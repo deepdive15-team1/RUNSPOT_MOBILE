@@ -44,7 +44,7 @@ export function BottomOverlay({
           <Button
             onPress={() =>
               router.push({
-                pathname: "/(main)/session-detail",
+                pathname: "/session-detail",
                 params: { id },
               })
             }

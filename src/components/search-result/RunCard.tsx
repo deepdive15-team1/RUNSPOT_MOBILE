@@ -62,7 +62,7 @@ export const RunCard = memo(function RunCard({
           textStyle={styles.customButtonText}
           onPress={() =>
             router.push({
-              pathname: "/(main)/session-detail",
+              pathname: "/session-detail",
               params: { id },
             })
           }
