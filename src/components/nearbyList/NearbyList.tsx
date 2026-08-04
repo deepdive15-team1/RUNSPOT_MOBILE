@@ -39,6 +39,11 @@ export function NearbyList({ x, y }: NearbyListProps) {
     }, [refetch]),
   );
 
+  const now = new Date();
+
+  const futureSessions =
+    sessions?.filter((session) => new Date(session.startAt) > now) || [];
+
   return (
     <View style={styles.outer}>
       <View style={styles.listHeader}>
@@ -59,7 +64,7 @@ export function NearbyList({ x, y }: NearbyListProps) {
             <Text style={styles.listMessage}>불러오는 중...</Text>
           </View>
         )}
-        {!loading && sessions?.length === 0 && (
+        {!loading && futureSessions.length === 0 && (
           <View style={styles.emptyBox}>
             <Text style={styles.listMessage}>
               현 위치 기준으로 조회된 러닝 세션이 없습니다.
@@ -67,9 +72,8 @@ export function NearbyList({ x, y }: NearbyListProps) {
           </View>
         )}
         {!loading &&
-          sessions &&
-          sessions.length > 0 &&
-          sessions.map((session) => (
+          futureSessions.length > 0 &&
+          futureSessions.map((session) => (
             <NearbyItem
               key={session.id}
               session={session}
