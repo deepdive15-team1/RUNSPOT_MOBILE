@@ -3,6 +3,7 @@ import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -199,7 +200,12 @@ export default function CreateSessionScreen() {
       setError({});
       await createSession(requestBody);
       useCreateSessionDraftStore.getState().resetDraft();
-      router.back();
+      Alert.alert("안내", "러닝 개설이 완료되었습니다.", [
+        {
+          text: "확인",
+          onPress: () => router.replace("/(main)"),
+        },
+      ]);
     } catch (err) {
       const fallback = "세션 개설에 실패했습니다.";
       if (err instanceof AxiosError) {
