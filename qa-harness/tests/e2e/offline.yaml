@@ -1,0 +1,31 @@
+# QueryClient 에 defaultOptions 가 전혀 없다.
+# 기본 retry:3 × timeout:10000 조합이면 오프라인에서 최대 40초 무한 스피너다.
+
+appId: com.runspot.app
+---
+- launchApp:
+    permissions:
+      location: allow
+- runFlow:
+    file: ./_login.yaml
+    env:
+      USER_ID: "${USER_ID}"
+      PW: "${PW}"
+
+- setAirplaneMode: enabled
+- tapOn:
+    id: "search-tab"
+
+# 스피너가 아니라 에러 상태 + 재시도 버튼이 15초 안에 떠야 한다
+- assertVisible:
+    id: "error-retry"
+    timeout: 15000
+- assertNotVisible:
+    id: "loading-spinner"
+
+- setAirplaneMode: disabled
+- tapOn:
+    id: "error-retry"
+- assertVisible:
+    id: "search-map"
+    timeout: 15000

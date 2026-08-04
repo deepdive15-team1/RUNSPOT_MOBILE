@@ -1,0 +1,31 @@
+# 위치 권한 거부 시 전국 지도(36.5, 127.5, zoom 6) 폴백.
+# useCurrentLocation.ts 는 거부될 때마다 Alert 을 띄운다 — 매 진입마다 뜨는 게 맞는지 스펙 확정 필요.
+
+appId: com.runspot.app
+---
+- launchApp:
+    clearState: true
+    permissions:
+      location: deny
+- runFlow:
+    file: ./_login.yaml
+    env:
+      USER_ID: "${USER_ID}"
+      PW: "${PW}"
+
+- tapOn:
+    id: "search-tab"
+- assertVisible:
+    text: "위치 권한 필요"
+- tapOn:
+    text: "확인"
+- assertVisible:
+    id: "search-map"
+
+# 재진입 시 Alert 반복 여부 — 현재 동작을 기록해두고 스펙과 맞춘다
+- tapOn:
+    id: "home-tab"
+- tapOn:
+    id: "search-tab"
+- assertVisible:
+    text: "위치 권한 필요"
