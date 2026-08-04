@@ -2,8 +2,8 @@ import { ExpoConfig, ConfigContext } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "RUNSPOT_MOBILE",
-  slug: "RUNSPOT_MOBILE",
+  name: "RunSpot",
+  slug: "runspot_mobile",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./src/assets/icon.png",
@@ -26,14 +26,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     package: "com.runspot.app",
     predictiveBackGestureEnabled: false,
+    versionCode: 1,
   },
   web: {
     favicon: "./src/assets/favicon.png",
-  },
-  extra: {
-    eas: {
-      projectId: "ad9e7378-8769-47fc-9901-11c854b9df72",
-    },
   },
   plugins: [
     "expo-router",
