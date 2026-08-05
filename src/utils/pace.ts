@@ -3,18 +3,32 @@
  */
 export function paceStringToSeconds(value: string): number | null {
   const trimmed = value.trim().replace(/\s/g, "");
+
+  /** 숫자1~2자리:숫자2자리 형식만 허용 */
+  if (!/^\d{1,2}:\d{2}$/.test(trimmed)) {
+    return null;
+  }
+
   const parts = trimmed.split(":");
-  if (parts.length !== 2) return null;
 
   const min = parseInt(parts[0], 10);
   const sec = parseInt(parts[1], 10);
-  if (!Number.isInteger(min) || !Number.isInteger(sec)) return null;
-  if (sec < 0 || sec > 59) return null;
-  return min * 60 + sec;
+
+  if (sec > 59) return null;
+
+  const totalSeconds = min * 60 + sec;
+
+  if (totalSeconds < 120 || totalSeconds > 900) return null;
+
+  return totalSeconds;
 }
 
 /** 초 단위 숫자를 "mm:ss" 문자열로 변환 */
 export function secondsToPaceString(totalSeconds: number): string {
+  if (totalSeconds < 0) {
+    throw new Error("페이스 초 단위는 음수가 될 수 없습니다.");
+  }
+
   const min = Math.floor(totalSeconds / 60);
   const sec = totalSeconds % 60;
   return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
