@@ -13,6 +13,7 @@ import {
   fontWeights,
   spacing,
 } from "@/src/constants";
+import { nearbyKeys } from "@/src/constants/queryKeys";
 
 export interface NearbyListProps {
   /** 주변 세션 검색 경도 */
@@ -29,7 +30,7 @@ export function NearbyList({ x, y }: NearbyListProps) {
     isLoading: loading,
     refetch,
   } = useQuery({
-    queryKey: ["nearbySessions", x, y],
+    queryKey: nearbyKeys.location(x, y),
     queryFn: () => nearbySession({ x, y, size: 3 }),
   });
 

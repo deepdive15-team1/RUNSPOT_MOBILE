@@ -19,6 +19,7 @@ import GoodIcon from "@/src/assets/icon/rating/good.svg";
 import { Button } from "@/src/components/common/button/Button";
 import Chip from "@/src/components/common/chip";
 import { colors, spacing, fontSizes, fontWeights } from "@/src/constants";
+import { sessionKeys } from "@/src/constants/queryKeys";
 import { RatingType } from "@/src/types/api/rating";
 
 const FEEDBACK_TAGS = [
@@ -42,7 +43,7 @@ export default function HostRatingScreen() {
     isError: isSessionError,
     refetch,
   } = useQuery({
-    queryKey: ["session", sessionId],
+    queryKey: sessionKeys.detail(sessionId),
     queryFn: () => getSessionDetail(Number(sessionId)),
     enabled: !!sessionId,
   });

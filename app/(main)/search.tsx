@@ -21,6 +21,7 @@ import Chip from "@/src/components/common/chip";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
 import { BottomOverlay } from "@/src/components/search/BottomOverLay";
 import { theme } from "@/src/constants";
+import { mapKeys, sessionKeys } from "@/src/constants/queryKeys";
 import { useCurrentLocation } from "@/src/hooks/search/useCurrentLocation";
 import { GetMarkersParams } from "@/src/types/api/search";
 
@@ -40,14 +41,14 @@ export default function SearchScreen() {
   const mapRef = useRef<NaverMapViewRef>(null);
 
   const { data: markers = [] } = useQuery({
-    queryKey: ["mapMarkers", bounds],
+    queryKey: mapKeys.markers(bounds),
     queryFn: () => getMapMarkers(bounds!),
     enabled: !!bounds,
     staleTime: CACHE_TIME_1_MIN,
   });
 
   const { data: selectedCourse, isFetching: isDetailLoading } = useQuery({
-    queryKey: ["sessionDetail", selectedSessionId],
+    queryKey: sessionKeys.summary(selectedSessionId!),
     queryFn: () => getSessionSummary(selectedSessionId!),
     enabled: !!selectedSessionId,
     staleTime: CACHE_TIME_5_MIN,

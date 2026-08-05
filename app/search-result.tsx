@@ -21,10 +21,11 @@ import { Button } from "@/src/components/common/button/Button";
 import { RunCard } from "@/src/components/search-result/RunCard";
 import { searchStyles as styles } from "@/src/components/search-result/SearchResult.styles";
 import { theme } from "@/src/constants";
+import { searchKeys } from "@/src/constants/queryKeys";
 import { useDebounce } from "@/src/hooks/search/useDebounce";
 import type { SearchParamType } from "@/src/types/api/search";
 
-type SessionSearchQueryKey = ["sessions", "search", string];
+type SessionSearchQueryKey = ReturnType<typeof searchKeys.query>;
 
 export default function SearchResultScreen() {
   const { q } = useLocalSearchParams<{ q: string }>();
@@ -77,9 +78,9 @@ export default function SearchResultScreen() {
     refetch,
     isRefetching,
   } = useInfiniteQuery({
-    queryKey: ["sessions", "search", debouncedQuery] as SessionSearchQueryKey,
+    queryKey: searchKeys.query(debouncedQuery),
     queryFn: fetchSessions,
-    initialPageParam: null,
+    initialPageParam: null as number | null,
     enabled: !!debouncedQuery,
     getNextPageParam: (lastPage) => {
       if (lastPage.last) {

@@ -10,12 +10,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { attendanceKey } from "@/src/api/attendance/attendance.keys";
 import { getAttendance } from "@/src/api/attendance/attendanceApi.index";
 import { rateMembers } from "@/src/api/rating/ratingApi.index";
 import { Button } from "@/src/components/common/button/Button";
 import { MemberRatingCard } from "@/src/components/rating/MemberRatingCard";
 import { colors, spacing, fontSizes, fontWeights } from "@/src/constants";
+import { attendanceKey, myPageKeys } from "@/src/constants/queryKeys";
 import { JoinRequest } from "@/src/types/api/manageParticipants";
 import { RatingType } from "@/src/types/api/rating";
 
@@ -48,7 +48,7 @@ export default function MemberRatingScreen() {
       payloadRatings: { targetUserId: number; rating: RatingType }[],
     ) => rateMembers(Number(sessionId), { ratings: payloadRatings }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myPage", "createdRuns"] });
+      queryClient.invalidateQueries({ queryKey: myPageKeys.createdRuns() });
       router.back();
     },
     onError: (error) => {
