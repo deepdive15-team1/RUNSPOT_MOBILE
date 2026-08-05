@@ -131,6 +131,7 @@ axiosInstance.interceptors.response.use(
         failedQueue.push({
           resolve: (token: string) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
+            originalRequest._retry = true;
             resolve(axiosInstance(originalRequest));
           },
           reject,
