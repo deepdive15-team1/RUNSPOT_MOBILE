@@ -49,7 +49,8 @@ export default function RootLayout() {
     return () => {
       isMounted = false;
     };
-  }, [router, segments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   if (!authReady) {
     return <LoadingScreen />;
