@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { attendanceKey } from "@/src/api/attendance/attendance.keys";
 import {
   getAttendance,
   updateAttendance,
@@ -30,6 +29,7 @@ import {
   spacing,
   borderRadius,
 } from "@/src/constants";
+import { sessionKeys, attendanceKey } from "@/src/constants/queryKeys";
 import { AttendanceMember, AttendanceStatus } from "@/src/types/api/attendance";
 import { CreatedRunningResponse } from "@/src/types/api/mypage";
 import { formatDate } from "@/src/utils/date";
@@ -49,7 +49,7 @@ export default function AttendanceScreen() {
 
   // 마이페이지 캐시에서 세션 정보 가져와 헤더 즉시 렌더링
   const { data: sessionInfo } = useQuery({
-    queryKey: ["sessionDetail", sessionId],
+    queryKey: sessionKeys.detail(sessionId),
     queryFn: async () => {
       const response = await getSessionDetail(sessionId);
       return {
@@ -105,8 +105,10 @@ export default function AttendanceScreen() {
 
     onSuccess: () => {
       setPendingChanges({});
-      queryClient.invalidateQueries({ queryKey: ["attendance", sessionId] });
-      queryClient.invalidateQueries({ queryKey: ["sessionDetail", sessionId] });
+      queryClient.invalidateQueries({ queryKey: attendanceKey.all(sessionId) });
+      queryClient.invalidateQueries({
+        queryKey: sessionKeys.detail(sessionId),
+      });
 
       // 러닝 시작 성공 알림 띄우기
       Alert.alert(

@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { attendanceKey } from "@/src/api/attendance/attendance.keys";
 import { getAttendance } from "@/src/api/attendance/attendanceApi.index";
 import {
   kickOutParticipant,
@@ -31,6 +30,7 @@ import {
   spacing,
   borderRadius,
 } from "@/src/constants";
+import { attendanceKey, sessionKeys } from "@/src/constants/queryKeys";
 import { AttendanceMember } from "@/src/types/api/attendance";
 import { formatDate } from "@/src/utils/date";
 
@@ -44,7 +44,7 @@ export default function ManageAttendanceScreen() {
 
   // 상단 헤더에 보여줄 세션 정보(제목, 날짜) 가져오기
   const { data: sessionInfo } = useQuery({
-    queryKey: ["sessionDetail", sessionId],
+    queryKey: sessionKeys.detail(sessionId),
     queryFn: async () => {
       const response = await getSessionDetail(sessionId);
       return { title: response.title, date: response.startAt };

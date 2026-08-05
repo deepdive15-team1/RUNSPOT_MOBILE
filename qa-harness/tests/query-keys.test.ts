@@ -41,7 +41,9 @@ function collectQueryKeys(): KeyUse[] {
         const m = line.match(/queryKey:\s*\[([^\]]*)\]/);
         if (!m) return;
         const inner = m[1].trim();
-        const head = (inner.split(",")[0] ?? "").trim().replace(/^["'`]|["'`]$/g, "");
+        const head = (inner.split(",")[0] ?? "")
+          .trim()
+          .replace(/^["'`]|["'`]$/g, "");
         uses.push({ file: rel, line: i + 1, raw: inner, head });
       });
     }

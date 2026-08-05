@@ -12,6 +12,7 @@ import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent
 import { BottomSubmit } from "@/src/components/session-detail/BottomSubmit";
 import { SessionDetailStyles as styles } from "@/src/components/session-detail/SessionDetail.styles";
 import { colors } from "@/src/constants";
+import { sessionKeys } from "@/src/constants/queryKeys";
 import { GENDER_INFO, RUN_TYPE_INFO } from "@/src/constants/session";
 import { secondsToPaceString } from "@/src/utils";
 import { formatDisplayDate } from "@/src/utils/date";
@@ -21,7 +22,7 @@ export default function SessionDetailScreen() {
   const sessionId = Number(id);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["session", "detail", sessionId],
+    queryKey: sessionKeys.detail(sessionId),
     queryFn: () => getSessionDetail(sessionId),
     enabled: !isNaN(sessionId),
   });

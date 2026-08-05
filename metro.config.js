@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports, no-undef*/
 /* eslint-env node */
 const { getDefaultConfig } = require("expo/metro-config");
 

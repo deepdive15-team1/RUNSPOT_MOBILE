@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports, no-undef*/
 const React = require("react");
 module.exports = {
   __esModule: true,
