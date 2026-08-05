@@ -17,6 +17,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
+      queryClient.clear();
       router.replace("/(auth)/login");
     });
   }, [router]);

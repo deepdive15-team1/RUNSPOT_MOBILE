@@ -116,6 +116,7 @@ axiosInstance.interceptors.response.use(
     }
 
     if (shouldSkipTokenRefresh(originalRequest.url)) {
+      await clearAuthTokens();
       notifyUnauthorized(error);
       return Promise.reject(error);
     }
