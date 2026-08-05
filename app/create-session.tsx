@@ -123,6 +123,14 @@ export default function CreateSessionScreen() {
 
     const next: Record<string, string> = {};
 
+    if (isEmpty(runType)) {
+      next.runType = "달리기 종류를 선택해주세요.";
+    }
+
+    if (isEmpty(genderPolicy)) {
+      next.genderPolicy = "참여 성별을 선택해주세요.";
+    }
+
     if (isEmpty(title.trim())) {
       next.title = "모임 이름을 입력해주세요.";
     }
@@ -175,6 +183,10 @@ export default function CreateSessionScreen() {
       return;
     }
 
+    if (runType === "" || genderPolicy === "") {
+      return;
+    }
+
     const distParsed = Number(targetDistanceKm.trim());
     const dist =
       Number.isFinite(distParsed) && distParsed > 0
@@ -183,7 +195,7 @@ export default function CreateSessionScreen() {
 
     const requestBody: CreateSessionRequest = {
       title: title.trim(),
-      runType: runType as RunType,
+      runType: runType,
       locationName: locationName.trim(),
       locationX: lon,
       locationY: lat,
@@ -192,7 +204,7 @@ export default function CreateSessionScreen() {
       avgPaceSec: paceSec!,
       startAt: startAt.trim(),
       capacity: cap,
-      genderPolicy: genderPolicy as GenderPolicy,
+      genderPolicy: genderPolicy,
     };
 
     try {
