@@ -24,7 +24,9 @@ describe("EAS production 프로파일", () => {
     const url: string | undefined = prod?.env?.EXPO_PUBLIC_API_BASE_URL;
     expect(url).toBeDefined();
     expect(url).toMatch(/^https:\/\//);
-    expect(url).not.toMatch(/localhost|127\.0\.0\.1|ngrok|10\.0\.2\.2|192\.168\./);
+    expect(url).not.toMatch(
+      /localhost|127\.0\.0\.1|ngrok|10\.0\.2\.2|192\.168\./,
+    );
   });
 
   it("네이버 지도 클라이언트 ID 가 주입된다", () => {
@@ -36,14 +38,19 @@ describe("모킹 스위치 규약", () => {
   it("EXPO_PUBLIC_USE_MOCK 은 *.index.ts 에서만 읽는다", () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {
-      for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      for (const e of fs.readdirSync(path.join(ROOT, dir), {
+        withFileTypes: true,
+      })) {
         const rel = path.join(dir, e.name);
         if (e.isDirectory()) {
           if (e.name === "node_modules" || e.name.startsWith(".")) continue;
           walk(rel);
         } else if (/\.(ts|tsx)$/.test(e.name)) {
           const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
-          if (src.includes("EXPO_PUBLIC_USE_MOCK") && !/\.index\.ts$/.test(e.name)) {
+          if (
+            src.includes("EXPO_PUBLIC_USE_MOCK") &&
+            !/\.index\.ts$/.test(e.name)
+          ) {
             offenders.push(rel);
           }
         }
@@ -76,9 +83,14 @@ describe("모킹 스위치 규약", () => {
   it("화면 코드는 *.index 를 통해서만 API 를 import 한다", () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {
-      for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      for (const e of fs.readdirSync(path.join(ROOT, dir), {
+        withFileTypes: true,
+      })) {
         const rel = path.join(dir, e.name);
-        if (e.isDirectory()) { walk(rel); continue; }
+        if (e.isDirectory()) {
+          walk(rel);
+          continue;
+        }
         if (!/\.tsx?$/.test(e.name)) continue;
         const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
         const bad = src.match(/from "@\/src\/api\/[\w-]+\/\w+Api"/g);

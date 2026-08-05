@@ -33,7 +33,9 @@ describe("matchAlphaNum", () => {
     ["abc-123", 1, undefined, false],
     ["  abc123  ", 6, undefined, true],
   ])("(%s, %s, %s) → %s", (v, min, max, expected) => {
-    expect(matchAlphaNum(v as string, min as number, max as number | undefined)).toBe(expected);
+    expect(
+      matchAlphaNum(v as string, min as number, max as number | undefined),
+    ).toBe(expected);
   });
 
   it("빈 문자열은 minLen 0 이어도 false (패턴이 + 라서)", () => {
@@ -58,12 +60,17 @@ describe("isValidPassword", () => {
 });
 
 describe("isInRange1To7 — 스펙 확정 필요 ★", () => {
-  it.each([[1, true], [7, true], [0, false], [8, false], [3.5, false], ["", false], [null, false]])(
-    "%p → %s",
-    (v, expected) => {
-      expect(isInRange1To7(v)).toBe(expected);
-    },
-  );
+  it.each([
+    [1, true],
+    [7, true],
+    [0, false],
+    [8, false],
+    [3.5, false],
+    ["", false],
+    [null, false],
+  ])("%p → %s", (v, expected) => {
+    expect(isInRange1To7(v)).toBe(expected);
+  });
 
   // Number(" 3 ") === 3, Number("3.0") === 3 이라 통과한다.
   // 주간 러닝 횟수 입력에 쓰이므로 문자열을 어디까지 허용할지 정하고 여기에 못 박는다.
