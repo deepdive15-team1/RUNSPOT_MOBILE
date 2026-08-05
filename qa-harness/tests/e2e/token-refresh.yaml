@@ -1,0 +1,56 @@
+# ★★ 결함 4·5 회귀.
+# 사전조건: 짧은 액세스 TTL 을 주는 QA 서버이거나, 디버그 빌드에 "토큰 강제 만료" 히든 메뉴.
+
+appId: com.runspot.app
+---
+- launchApp:
+    clearState: true
+    permissions:
+      location: allow
+- runFlow:
+    file: ./_login.yaml
+    env:
+      USER_ID: "${USER_ID}"
+      PW: "${PW}"
+
+# 액세스 토큰만 폐기
+- tapOn:
+    id: "mypage-tab"
+- longPressOn:
+    id: "mypage-version-label"
+- tapOn:
+    text: "액세스 토큰 만료"
+
+# 여러 쿼리가 동시에 401 → 재발급은 1회, 로그인 화면으로 튕기지 않아야 한다
+- tapOn:
+    id: "home-tab"
+- tapOn:
+    id: "mypage-tab"
+- assertVisible:
+    id: "mypage-profile-name"
+    timeout: 15000
+- assertNotVisible:
+    id: "login-submit"
+
+# 리프레시까지 폐기 → 이번엔 로그인 화면으로 정확히 1회 이동
+- longPressOn:
+    id: "mypage-version-label"
+- tapOn:
+    text: "리프레시 토큰 만료"
+- tapOn:
+    id: "mypage-tab"
+- assertVisible:
+    id: "login-submit"
+    timeout: 15000
+
+# ★ 결함 5 회귀: 다른 계정으로 로그인했을 때 이전 계정 데이터가 남으면 안 된다.
+#   인터셉터의 401 리다이렉트는 queryClient.clear() 를 호출하지 않는다.
+- runFlow:
+    file: ./_login.yaml
+    env:
+      USER_ID: "${OTHER_USER_ID}"
+      PW: "${PW}"
+- tapOn:
+    id: "mypage-tab"
+- assertNotVisible:
+    text: "${USER_NAME}"

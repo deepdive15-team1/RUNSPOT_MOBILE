@@ -1,0 +1,156 @@
+# ★★ 호스트 1명 + 참가자 1명. 이 흐름 하나가 docs 없는 이 저장소의 유일한 실행 가능 명세다.
+#
+# 실행:
+#   maestro test tests/e2e/full-flow.yaml -e HOST_ID=... -e MEMBER_ID=... -e PW=...
+# 사전조건: EAS development 빌드, 시뮬레이터 좌표를 서울시청(37.5665, 126.9780)으로 고정.
+
+appId: com.runspot.app
+env:
+  SESSION_TITLE: "QA 자동화 러닝"
+---
+- launchApp:
+    clearState: true
+    permissions:
+      location: allow
+
+# ── 호스트: 로그인 ─────────────────────────────────────
+- runFlow:
+    file: ./_login.yaml
+    env:
+      USER_ID: "${HOST_ID}"
+      PW: "${PW}"
+
+# ── 호스트: 러닝 코스 그리기 → 세션 개설 ───────────────
+- tapOn:
+    id: "home-create-session"
+- tapOn:
+    id: "create-draw-course"
+# 폴리라인은 2개 이상이어야 통과한다 (create-session.tsx 검증)
+- tapOn:
+    point: "40%,45%"
+- tapOn:
+    point: "55%,52%"
+- tapOn:
+    point: "62%,60%"
+- tapOn:
+    id: "draw-course-confirm"
+
+- tapOn:
+    id: "create-title"
+- inputText: "${SESSION_TITLE}"
+
+# ★ 결함 3 회귀: 러닝 유형·성별 조건을 안 고르고 제출하면 막혀야 한다.
+#   현재는 runType: "" 이 그대로 서버로 나간다.
+- tapOn:
+    id: "create-submit"
+- assertVisible:
+    text: ".*러닝 유형.*"
+    timeout: 3000
+
+- tapOn:
+    id: "create-run-type"
+- tapOn:
+    text: "장거리 조깅"
+- tapOn:
+    id: "create-gender-policy"
+- tapOn:
+    text: "혼성"
+- tapOn:
+    id: "create-capacity"
+- tapOn:
+    text: "4명"
+
+# ★ 결함 2 회귀: 페이스 직접 입력. 음수·0 은 거부되어야 한다.
+- tapOn:
+    id: "create-pace"
+- eraseText
+- inputText: "0000"
+- tapOn:
+    id: "create-submit"
+- assertVisible:
+    text: ".*페이스.*"
+    timeout: 3000
+- tapOn:
+    id: "create-pace"
+- eraseText
+- inputText: "0600"
+
+- tapOn:
+    id: "create-start-at"
+- tapOn:
+    id: "datetime-confirm"
+
+- tapOn:
+    id: "create-submit"
+- assertVisible:
+    text: "${SESSION_TITLE}"
+    timeout: 10000
+
+# ── 참가자 기기: 신청 ──────────────────────────────────
+- runFlow:
+    file: ./_member-join.yaml
+    env:
+      SESSION_TITLE: "${SESSION_TITLE}"
+      MEMBER_ID: "${MEMBER_ID}"
+      PW: "${PW}"
+
+# ── 호스트: 승인 → 마감 → 시작 ─────────────────────────
+- tapOn:
+    text: "${SESSION_TITLE}"
+- tapOn:
+    id: "detail-manage-participants"
+- assertVisible:
+    id: "requested-list"
+- tapOn:
+    id: "participant-accept-0"
+- assertVisible:
+    text: "승인"
+    timeout: 5000
+
+- tapOn:
+    id: "manage-close-session"
+- tapOn:
+    text: "확인"
+- tapOn:
+    id: "session-start"
+
+# ── 호스트: 출석 ───────────────────────────────────────
+- tapOn:
+    id: "detail-manage-attendance"
+- tapOn:
+    id: "attendance-toggle-0"
+- tapOn:
+    text: "출석"
+- assertVisible:
+    id: "attendance-status-0-ATTENDED"
+
+# ★ 결함 1 회귀: 뒤로 나갔을 때 상세 화면이 갱신되어 있어야 한다.
+#   세션 상세가 캐시 키 3종으로 쪼개져 있으면 여기서 낡은 값이 보인다.
+- back
+- assertVisible:
+    id: "detail-attendance-count-1"
+
+# ── 호스트: 종료 → 참가자 평가 ─────────────────────────
+- tapOn:
+    id: "session-finish"
+- tapOn:
+    text: "확인"
+- assertVisible:
+    id: "member-rating-root"
+    timeout: 10000
+- tapOn:
+    id: "rating-positive-0"
+- tapOn:
+    id: "rating-submit"
+
+# 종료된 세션에서 강퇴·시작이 다시 노출되면 안 된다 (상태 머신)
+- assertNotVisible:
+    id: "session-start"
+- assertNotVisible:
+    id: "participant-kick-0"
+
+# ── 참가자: 호스트 평가 → 마이페이지 확인 ──────────────
+- runFlow:
+    file: ./_member-rate.yaml
+    env:
+      SESSION_TITLE: "${SESSION_TITLE}"

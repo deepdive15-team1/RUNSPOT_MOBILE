@@ -1,0 +1,40 @@
+# 참가자 기기: 검색 → 신청
+appId: com.runspot.app
+---
+- launchApp:
+    clearState: true
+    permissions:
+      location: allow
+- runFlow:
+    file: ./_login.yaml
+    env:
+      USER_ID: "${MEMBER_ID}"
+      PW: "${PW}"
+
+- tapOn:
+    id: "search-tab"
+- assertVisible:
+    id: "search-map"
+    timeout: 15000
+- tapOn:
+    id: "search-input"
+- inputText: "${SESSION_TITLE}"
+- tapOn:
+    text: "${SESSION_TITLE}"
+
+- assertVisible:
+    id: "session-detail-root"
+- tapOn:
+    id: "detail-join"
+- tapOn:
+    id: "join-message"
+- inputText: "QA 자동화 신청입니다"
+- tapOn:
+    id: "join-submit"
+- assertVisible:
+    text: ".*신청.*완료.*"
+    timeout: 10000
+
+# 승인 전에는 다시 신청할 수 없어야 한다
+- assertNotVisible:
+    id: "detail-join"
