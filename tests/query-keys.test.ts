@@ -57,8 +57,8 @@ const SESSION_DETAIL_HEADS = ["sessionDetail", "session"];
 describe("쿼리 키 일관성", () => {
   const uses = collectQueryKeys();
 
-  it("스캔이 실제로 뭔가를 찾았다 (스캐너 자체 검증)", () => {
-    expect(uses.length).toBeGreaterThan(5);
+  it("★ 프로젝트 전체에 하드코딩된 리터럴 쿼리 키는 0개여야 한다", () => {
+    expect(uses.length).toBe(0);
   });
 
   it("★★ 세션 상세는 단 하나의 키 형태만 쓴다", () => {
@@ -70,7 +70,7 @@ describe("쿼리 키 일관성", () => {
       .join("\n");
 
     // 현재 3종류: ["sessionDetail", id] / ["session","detail",id] / ["session", id]
-    expect(`${shapes.size}종류\n${report}`).toBe(`1종류\n${report}`);
+    expect(`${shapes.size}종류\n${report}`).toBe(`0종류\n${report}`);
   });
 
   it("★ queryKey 는 리터럴 배열이 아니라 키 팩토리를 통해서만 만든다", () => {
