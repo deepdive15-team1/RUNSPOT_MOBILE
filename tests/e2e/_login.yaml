@@ -1,0 +1,13 @@
+appId: com.runspot.app
+---
+- tapOn:
+    id: "login-username"
+- inputText: "${USER_ID}"
+- tapOn:
+    id: "login-password"
+- inputText: "${PW}"
+- tapOn:
+    id: "login-submit"
+- assertVisible:
+    id: "home-root"
+    timeout: 10000
