@@ -1,6 +1,6 @@
 /** 빈 값 여부 */
 export function isEmpty(value: unknown): boolean {
-  if (value === null) return true;
+  if (value === null || value === undefined) return true;
   if (typeof value === "string") {
     return value.trim().length === 0;
   }

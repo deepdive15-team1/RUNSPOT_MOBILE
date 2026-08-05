@@ -32,27 +32,27 @@ describe("paceStringToSeconds — 거부해야 하는 입력", () => {
 
 describe("paceStringToSeconds — 현재 실패 ★★ (실제 결함)", () => {
   // parseInt 가 "5abc" 를 5 로 읽는다
-  it.skip("영숫자 혼합을 거부한다 (BUG-002에서 해결 예정)", () => {
+  it("영숫자 혼합을 거부한다", () => {
     expect(paceStringToSeconds("5abc:30")).toBeNull(); // 현재 330
   });
 
   // 분(min)에 하한 검사가 없다 → 음수 페이스가 서버로 나간다
-  it.skip("음수 분을 거부한다 (BUG-002에서 해결 예정)", () => {
+  it("음수 분을 거부한다", () => {
     expect(paceStringToSeconds("-01:30")).toBeNull(); // 현재 -30
   });
 
   // 0초/km 페이스는 물리적으로 불가능
-  it.skip("0 페이스를 거부한다 (BUG-002에서 해결 예정)", () => {
+  it("0 페이스를 거부한다", () => {
     expect(paceStringToSeconds("0:0")).toBeNull(); // 현재 0
   });
 
   // "05:5" 는 5분 5초인가 5분 50초인가? 모호하면 거부해야 한다
-  it.skip("초가 2자리가 아니면 거부한다 (BUG-002에서 해결 예정)", () => {
+  it("초가 2자리가 아니면 거부한다", () => {
     expect(paceStringToSeconds("05:5")).toBeNull(); // 현재 305
   });
 
   // 러닝 페이스로 성립하는 범위 밖
-  it.skip("현실적인 범위(2:00~15:00) 밖을 거부한다 (BUG-002에서 해결 예정)", () => {
+  it("현실적인 범위(2:00~15:00) 밖을 거부한다", () => {
     expect(paceStringToSeconds("99:59")).toBeNull(); // 현재 5999
     expect(paceStringToSeconds("01:00")).toBeNull(); // 현재 60
   });
@@ -68,7 +68,7 @@ describe("secondsToPaceString", () => {
   });
 
   // 현재 실패: "-1:-30" 이라는 말이 안 되는 문자열이 나온다
-  it.skip("음수 입력을 방어한다 ★ (BUG-002에서 해결 예정)", () => {
+  it("음수 입력을 방어한다 ★", () => {
     expect(() => secondsToPaceString(-30)).toThrow();
   });
 });
