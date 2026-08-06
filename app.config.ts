@@ -26,7 +26,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     package: "com.runspot.app",
     predictiveBackGestureEnabled: false,
-    versionCode: 1,
+    versionCode: 2,
   },
   web: {
     favicon: "./src/assets/favicon.png",
