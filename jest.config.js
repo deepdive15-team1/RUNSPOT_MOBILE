@@ -22,10 +22,10 @@ module.exports = {
   // 순수 로직은 커버리지를 실제로 강제한다. 화면은 E2E 로 본다.
   coverageThreshold: {
     "src/utils/": {
-      statements: 15, // 기존 90 -> 15로 임시 변경 (TODO: 버그 해결 후 복구)
-      branches: 15, // 기존 85 -> 15로 임시 변경
-      functions: 15, // 기존 90 -> 15로 임시 변경
-      lines: 15, // 기존 90 -> 15로 임시 변경
+      statements: 90,
+      branches: 85,
+      functions: 90,
+      lines: 90,
     },
   },
 };
