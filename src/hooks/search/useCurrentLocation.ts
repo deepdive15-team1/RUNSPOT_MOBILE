@@ -52,8 +52,8 @@ export function useCurrentLocation() {
         if (!isMounted) return;
         console.warn("위치 로드 실패", error);
         Alert.alert(
-          "현재 위치를 찾지 못해 전국 지도를 표시합니다.",
-          "원하는 위치를 찾아보세요.",
+          "위치 확인 불가",
+          "현재 위치를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
           [{ text: "확인" }],
         );
         setCamera(DEFAULT_LOCATION);

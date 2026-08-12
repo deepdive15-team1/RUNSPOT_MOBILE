@@ -20,17 +20,13 @@ describe("EAS production 프로파일", () => {
     expect(prod?.env?.EXPO_PUBLIC_USE_MOCK).not.toBe("true");
   });
 
-  it("★ API BASE URL 이 https 이고 로컬/터널 주소가 아니다", () => {
+  it("★ API BASE URL은 eas.json에 하드코딩되지 않아야 한다 (EAS Secrets 사용)", () => {
     const url: string | undefined = prod?.env?.EXPO_PUBLIC_API_BASE_URL;
-    expect(url).toBeDefined();
-    expect(url).toMatch(/^https:\/\//);
-    expect(url).not.toMatch(
-      /localhost|127\.0\.0\.1|ngrok|10\.0\.2\.2|192\.168\./,
-    );
+    expect(url).toBeUndefined();
   });
 
-  it("네이버 지도 클라이언트 ID 가 주입된다", () => {
-    expect(prod?.env?.EXPO_PUBLIC_NAVER_MAP_CLIENT_ID).toBeTruthy();
+  it("네이버 지도 클라이언트 ID는 eas.json에 하드코딩되지 않아야 한다 (EAS Secrets 사용)", () => {
+    expect(prod?.env?.EXPO_PUBLIC_NAVER_MAP_CLIENT_ID).toBeUndefined();
   });
 });
 

@@ -8,8 +8,6 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://set-in-eas-secrets.com",
-        "EXPO_PUBLIC_NAVER_MAP_CLIENT_ID": "INJECTED_BY_EAS_SECRETS",
         "EXPO_PUBLIC_USE_MOCK": "true"
       }
     },
@@ -19,9 +17,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://set-in-eas-secrets.com",
-        "EXPO_PUBLIC_NAVER_MAP_CLIENT_ID": "INJECTED_BY_EAS_SECRETS",
-        "EXPO_PUBLIC_USE_MOCK": "true"
+        "EXPO_PUBLIC_USE_MOCK": "false"
       }
     },
     "production": {
@@ -30,8 +26,6 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://set-in-eas-secrets.com",
-        "EXPO_PUBLIC_NAVER_MAP_CLIENT_ID": "INJECTED_BY_EAS_SECRETS",
         "EXPO_PUBLIC_USE_MOCK": "false"
       }
     }
