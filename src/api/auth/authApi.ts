@@ -8,6 +8,7 @@ import type {
   RefreshTokenResponse,
   SignupRequest,
   SignupResponse,
+  WithdrawResponse,
 } from "@/src/types/api/auth";
 
 export const signup = async (
@@ -47,5 +48,11 @@ export const logout = async (
     "/auth/logout",
     requestBody,
   );
+  return response.data;
+};
+
+export const withdraw = async (): Promise<WithdrawResponse> => {
+  const response =
+    await axiosInstance.delete<WithdrawResponse>("/auth/withdraw");
   return response.data;
 };

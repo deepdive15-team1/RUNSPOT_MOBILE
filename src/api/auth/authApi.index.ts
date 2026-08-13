@@ -3,12 +3,14 @@ import {
   logout as realLogout,
   refresh as realRefresh,
   signup as realSignup,
+  withdraw as realWithdraw,
 } from "@/src/api/auth/authApi";
 import {
   login as mockLogin,
   logout as mockLogout,
   refresh as mockRefresh,
   signup as mockSignup,
+  withdraw as mockWithdraw,
 } from "@/src/api/auth/authApi.mock";
 
 const isMock = process.env.EXPO_PUBLIC_USE_MOCK === "true";
@@ -40,3 +42,9 @@ export const refresh = isMock ? mockRefresh : realRefresh;
  * @returns 로그아웃 결과 메시지
  */
 export const logout = isMock ? mockLogout : realLogout;
+
+/**
+ * 회원탈퇴.
+ * @returns 탈퇴 결과 메시지
+ */
+export const withdraw = isMock ? mockWithdraw : realWithdraw;
