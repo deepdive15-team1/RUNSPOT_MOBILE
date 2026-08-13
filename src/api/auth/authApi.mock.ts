@@ -7,6 +7,7 @@ import type {
   RefreshTokenResponse,
   SignupRequest,
   SignupResponse,
+  WithdrawResponse,
 } from "@/src/types/api/auth";
 
 export const signup = async (
@@ -47,5 +48,11 @@ export const logout = async (
 ): Promise<LogoutResponse> => {
   return {
     message: "로그아웃 성공",
+  };
+};
+
+export const withdraw = async (): Promise<WithdrawResponse> => {
+  return {
+    message: "회원탈퇴 성공",
   };
 };

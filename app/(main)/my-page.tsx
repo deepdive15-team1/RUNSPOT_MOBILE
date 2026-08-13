@@ -22,6 +22,7 @@ import {
 } from "../../src/components/mypage/Sections";
 
 import { logoutUser } from "@/src/api/auth/logoutUser";
+import { withdrawUser } from "@/src/api/auth/withdraswUser";
 import RightArrowSvg from "@/src/assets/icon/my-page/rightarrow.svg";
 import SettingSvg from "@/src/assets/icon/my-page/setting.svg";
 import {
@@ -99,6 +100,35 @@ export default function MyPageScreen() {
         },
       },
     ]);
+  };
+
+  const handleWithdraw = () => {
+    Alert.alert(
+      "회원탈퇴",
+      "정말 탈퇴하시겠습니까?\n모든 러닝 기록과 정보가 즉시 삭제되며 복구할 수 없습니다.",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "탈퇴하기",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await withdrawUser({ queryClient });
+
+              setSettingsVisible(false);
+
+              Alert.alert("알림", "회원탈퇴가 완료되었습니다.");
+              router.replace("/(auth)/login");
+            } catch {
+              Alert.alert(
+                "오류",
+                "회원탈퇴 처리 중 문제가 발생했습니다. 다시 시도해주세요.",
+              );
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (isTotalLoading) {
@@ -184,12 +214,7 @@ export default function MyPageScreen() {
               />
             </Pressable>
             <View style={styles.divider} />
-            <Pressable
-              style={styles.modalItem}
-              // TODO: 회원탈퇴 로직 추가
-              // eslint-disable-next-line no-console
-              onPress={() => console.log("회원탈퇴 로직")}
-            >
+            <Pressable style={styles.modalItem} onPress={handleWithdraw}>
               <Text style={styles.modalItemText}>회원탈퇴</Text>
               <RightArrowSvg
                 width={20}

@@ -62,3 +62,8 @@ export interface SignupRequest {
 export interface SignupResponse {
   userId: number;
 }
+
+/** 회원탈퇴 응답 타입 */
+export interface WithdrawResponse {
+  message?: string;
+}
