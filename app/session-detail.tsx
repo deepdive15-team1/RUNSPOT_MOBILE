@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import { Text, View, ScrollView, ActivityIndicator } from "react-native";
 
 import { getSessionDetail } from "@/src/api/session-detail/sessionDetailApi.index";
@@ -15,11 +16,21 @@ import { colors } from "@/src/constants";
 import { sessionKeys } from "@/src/constants/queryKeys";
 import { GENDER_INFO, RUN_TYPE_INFO } from "@/src/constants/session";
 import { secondsToPaceString } from "@/src/utils";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 import { formatDisplayDate } from "@/src/utils/date";
 
 export default function SessionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const sessionId = Number(id);
+
+  // 상세보기 트래픽 기록
+  useEffect(() => {
+    if (sessionId && !isNaN(sessionId)) {
+      AnalyticsHelper.logEvent("view_session_detail", {
+        session_id: String(sessionId),
+      }).catch(console.error);
+    }
+  }, [sessionId]);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: sessionKeys.detail(sessionId),

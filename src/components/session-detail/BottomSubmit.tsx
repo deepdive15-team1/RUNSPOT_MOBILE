@@ -7,6 +7,7 @@ import { joinSession } from "@/src/api/session-detail/sessionDetailApi.index";
 import { Input } from "@/src/components/common/Input/Input";
 import { Button } from "@/src/components/common/button/Button";
 import { colors, spacing } from "@/src/constants";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 
 interface BottomSubmitProps {
   sessionId: number;
@@ -19,7 +20,13 @@ export function BottomSubmit({ sessionId }: BottomSubmitProps) {
 
   const joinMutation = useMutation({
     mutationFn: (msg: string) => joinSession(sessionId, msg),
-    onSuccess: () => {
+    onSuccess: async () => {
+      // 신청 완료 트래픽 기록
+      await AnalyticsHelper.logEvent("request_join", {
+        session_id: String(sessionId),
+        has_message: message.trim().length > 0, // 메시지 작성 여부 추적
+      });
+
       Alert.alert("신청 완료", "참여 신청이 성공적으로 완료되었습니다!", [
         {
           text: "확인",
