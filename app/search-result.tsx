@@ -24,6 +24,7 @@ import { theme } from "@/src/constants";
 import { searchKeys } from "@/src/constants/queryKeys";
 import { useDebounce } from "@/src/hooks/search/useDebounce";
 import type { SearchParamType } from "@/src/types/api/search";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 
 type SessionSearchQueryKey = ReturnType<typeof searchKeys.query>;
 
@@ -64,8 +65,15 @@ export default function SearchResultScreen() {
     return () => clearTimeout(focusTimer);
   }, []);
 
-  const handleSearchSubmit = () => {
+  const handleSearchSubmit = async () => {
     inputRef.current?.blur();
+
+    // 검색어 트래픽 기록
+    if (searchValue.trim().length > 0) {
+      await AnalyticsHelper.logEvent("search_session", {
+        keyword: searchValue.trim(),
+      });
+    }
   };
 
   const {
