@@ -20,6 +20,7 @@ import { Input } from "@/src/components/common/Input/Input";
 import { Button } from "@/src/components/common/button/Button";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
 import { isEmpty } from "@/src/utils";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -53,6 +54,14 @@ export default function LoginScreen() {
         setAccessToken(result.accessToken),
         setRefreshToken(result.refreshToken),
       ]);
+
+      // 로그인 트래픽 기록
+      if (result.userId) {
+        await AnalyticsHelper.setUserId(String(result.userId));
+      }
+
+      await AnalyticsHelper.logEvent("login", { method: "email" });
+
       router.replace("/(main)");
     } catch (error) {
       const fallbackMessage = "로그인에 실패했습니다.";

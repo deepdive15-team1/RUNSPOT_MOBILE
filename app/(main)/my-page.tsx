@@ -34,6 +34,7 @@ import {
   borderRadius,
 } from "@/src/constants";
 import { useMyPageQueries } from "@/src/hooks/mypage/useMyPageQueries";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export default function MyPageScreen() {
   const [isSettingsVisible, setSettingsVisible] = useState(false);
@@ -95,6 +96,12 @@ export default function MyPageScreen() {
         style: "destructive",
         onPress: async () => {
           await logoutUser({ queryClient });
+
+          // 로그아웃 트래픽 기록
+          await AnalyticsHelper.logEvent("logout", { method: "manual" });
+          // 사용자 식별자 초기화
+          await AnalyticsHelper.setUserId(null);
+
           setSettingsVisible(false);
           router.replace("/(auth)/login");
         },
@@ -114,6 +121,13 @@ export default function MyPageScreen() {
           onPress: async () => {
             try {
               await withdrawUser({ queryClient });
+
+              // 회원탈퇴 트래픽 기록
+              await AnalyticsHelper.logEvent("account_deleted", {
+                reason: "user_request",
+              });
+              // 사용자 식별자 초기화
+              await AnalyticsHelper.setUserId(null);
 
               setSettingsVisible(false);
 
