@@ -46,3 +46,7 @@ android/
 
 # IDE
 .idea/
+
+# Firebase & Google Services config files
+google-services.json
+GoogleService-Info.plist

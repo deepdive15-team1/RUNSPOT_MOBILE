@@ -63,10 +63,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "react-native-google-mobile-ads",
       {
-        // 백엔드 담당자에게 전달받은 안드로이드 앱 ID
-        androidAppId:
-          process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID ||
-          "ca-app-pub-xxxxxxxxxxxxxxxx~xxxxxxxxxx",
+        // 안드로이드 앱 ID
+        androidAppId: process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
         userTrackingUsageDescription:
           "사용자 맞춤형 광고 제공을 위해 권한이 필요합니다.",
       },
