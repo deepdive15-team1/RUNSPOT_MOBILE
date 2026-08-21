@@ -17,6 +17,7 @@ import BackSvg from "@/src/assets/icon/back.svg";
 import CloseSvg from "@/src/assets/icon/cancel.svg";
 import SearchSvg from "@/src/assets/icon/search.svg";
 import { Input } from "@/src/components/common/Input/Input";
+import { BannerAdComponent } from "@/src/components/common/admob/BannerAdComponent";
 import { Button } from "@/src/components/common/button/Button";
 import { RunCard } from "@/src/components/search-result/RunCard";
 import { searchStyles as styles } from "@/src/components/search-result/SearchResult.styles";
@@ -172,7 +173,10 @@ export default function SearchResultScreen() {
               if (hasNextPage) fetchNextPage();
             }}
             onEndReachedThreshold={0.5}
-            contentContainerStyle={styles.listContentContainer}
+            contentContainerStyle={[
+              styles.listContentContainer,
+              { paddingBottom: insets.bottom + 80 },
+            ]}
             ListEmptyComponent={
               <View style={styles.centerContainer}>
                 <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
@@ -197,6 +201,10 @@ export default function SearchResultScreen() {
           />
         </>
       )}
+
+      <View style={[styles.bannerContainer, { paddingBottom: insets.bottom }]}>
+        <BannerAdComponent />
+      </View>
     </View>
   );
 }

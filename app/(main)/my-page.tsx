@@ -25,6 +25,7 @@ import { logoutUser } from "@/src/api/auth/logoutUser";
 import { withdrawUser } from "@/src/api/auth/withdraswUser";
 import RightArrowSvg from "@/src/assets/icon/my-page/rightarrow.svg";
 import SettingSvg from "@/src/assets/icon/my-page/setting.svg";
+import { BannerAdComponent } from "@/src/components/common/admob/BannerAdComponent";
 import {
   colors,
   spacing,
@@ -204,6 +205,10 @@ export default function MyPageScreen() {
           isError={isHistoryRunsError}
           onRetry={refetchHistoryRuns}
         />
+
+        <View style={styles.adWrapper}>
+          <BannerAdComponent />
+        </View>
       </ScrollView>
 
       <Modal
@@ -259,6 +264,11 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   scrollContent: { paddingBottom: spacing.xxl },
+  adWrapper: {
+    marginTop: spacing.xl,
+    alignItems: "center",
+    width: "100%",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
