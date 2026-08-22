@@ -55,4 +55,12 @@ export const searchStyles = StyleSheet.create({
     color: theme.colors.gray400,
     fontSize: theme.fontSizes.base,
   },
+
+  bannerContainer: {
+    backgroundColor: theme.colors.bgSecondary,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

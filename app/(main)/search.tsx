@@ -24,6 +24,7 @@ import { theme } from "@/src/constants";
 import { mapKeys, sessionKeys } from "@/src/constants/queryKeys";
 import { useCurrentLocation } from "@/src/hooks/search/useCurrentLocation";
 import { GetMarkersParams } from "@/src/types/api/search";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 
 const MOCK_FILTERS = ["3km 이내", "오늘", "10km 이상"];
 const SEARCH_DEBOUNCE_MS = 300;
@@ -59,7 +60,14 @@ export default function SearchScreen() {
       id: course.id,
       longitude: course.x,
       latitude: course.y,
-      onTap: () => setSelectedSessionId(course.id),
+      onTap: () => {
+        setSelectedSessionId(course.id);
+
+        // 마커클릭 트래픽 기록
+        AnalyticsHelper.logEvent("select_map_marker", {
+          session_id: String(course.id),
+        }).catch(console.error);
+      },
     }));
   }, [markers, setSelectedSessionId]);
 

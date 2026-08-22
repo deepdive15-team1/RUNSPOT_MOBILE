@@ -25,6 +25,7 @@ import { logoutUser } from "@/src/api/auth/logoutUser";
 import { withdrawUser } from "@/src/api/auth/withdraswUser";
 import RightArrowSvg from "@/src/assets/icon/my-page/rightarrow.svg";
 import SettingSvg from "@/src/assets/icon/my-page/setting.svg";
+import { BannerAdComponent } from "@/src/components/common/admob/BannerAdComponent";
 import {
   colors,
   spacing,
@@ -34,6 +35,7 @@ import {
   borderRadius,
 } from "@/src/constants";
 import { useMyPageQueries } from "@/src/hooks/mypage/useMyPageQueries";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export default function MyPageScreen() {
   const [isSettingsVisible, setSettingsVisible] = useState(false);
@@ -95,6 +97,12 @@ export default function MyPageScreen() {
         style: "destructive",
         onPress: async () => {
           await logoutUser({ queryClient });
+
+          // 로그아웃 트래픽 기록
+          await AnalyticsHelper.logEvent("logout", { method: "manual" });
+          // 사용자 식별자 초기화
+          await AnalyticsHelper.setUserId(null);
+
           setSettingsVisible(false);
           router.replace("/(auth)/login");
         },
@@ -114,6 +122,13 @@ export default function MyPageScreen() {
           onPress: async () => {
             try {
               await withdrawUser({ queryClient });
+
+              // 회원탈퇴 트래픽 기록
+              await AnalyticsHelper.logEvent("account_deleted", {
+                reason: "user_request",
+              });
+              // 사용자 식별자 초기화
+              await AnalyticsHelper.setUserId(null);
 
               setSettingsVisible(false);
 
@@ -190,6 +205,10 @@ export default function MyPageScreen() {
           isError={isHistoryRunsError}
           onRetry={refetchHistoryRuns}
         />
+
+        <View style={styles.adWrapper}>
+          <BannerAdComponent />
+        </View>
       </ScrollView>
 
       <Modal
@@ -245,6 +264,11 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   scrollContent: { paddingBottom: spacing.xxl },
+  adWrapper: {
+    marginTop: spacing.xl,
+    alignItems: "center",
+    width: "100%",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

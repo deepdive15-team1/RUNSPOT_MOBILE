@@ -25,6 +25,7 @@ import type {
   GenderPolicy,
   RunType,
 } from "@/src/types/api/createSession";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 import { paceStringToSeconds } from "@/src/utils/pace";
 import { isEmpty } from "@/src/utils/validation";
 
@@ -212,6 +213,14 @@ export default function CreateSessionScreen() {
       setError({});
       await createSession(requestBody);
       useCreateSessionDraftStore.getState().resetDraft();
+
+      // 러닝 세션 생성 완료 트래픽 기록
+      await AnalyticsHelper.logEvent("create_session", {
+        run_type: runType,
+        target_distance: dist,
+        capacity: cap,
+      });
+
       Alert.alert("안내", "러닝 개설이 완료되었습니다.", [
         {
           text: "확인",

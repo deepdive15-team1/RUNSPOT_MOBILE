@@ -29,6 +29,7 @@ import {
   isValidPassword,
   paceStringToSeconds,
 } from "@/src/utils";
+import { AnalyticsHelper } from "@/src/utils/analytics";
 
 const AGE_GROUP_OPTIONS = [
   { value: "10S", label: "10대" },
@@ -130,6 +131,13 @@ export default function SignupScreen() {
       setIsSubmitting(true);
       setError({});
       await signup(requestBody);
+
+      // 회원가입 트래픽 기록
+      await AnalyticsHelper.logEvent("sign_up", {
+        gender: gender,
+        age_group: ageGroup,
+      });
+
       router.replace("/login");
     } catch (error) {
       const fallbackMessage = "회원가입에 실패했습니다.";

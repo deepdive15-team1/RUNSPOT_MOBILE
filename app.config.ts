@@ -25,6 +25,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: "./src/assets/android-icon-monochrome.png",
     },
     package: "com.runspot.app",
+    googleServicesFile: "./google-services.json",
     predictiveBackGestureEnabled: false,
     versionCode: 2,
   },
@@ -33,6 +34,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     "expo-router",
+    "expo-dev-client",
+    "@react-native-firebase/app",
+    "@react-native-firebase/analytics",
     [
       "@mj-studio/react-native-naver-map",
       {
@@ -54,6 +58,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         android: {
           extraMavenRepos: ["https://repository.map.naver.com/archive/maven"],
         },
+      },
+    ],
+    [
+      "react-native-google-mobile-ads",
+      {
+        // 안드로이드 앱 ID
+        androidAppId: process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID,
+        userTrackingUsageDescription:
+          "사용자 맞춤형 광고 제공을 위해 권한이 필요합니다.",
       },
     ],
   ],
