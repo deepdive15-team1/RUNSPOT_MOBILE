@@ -11,9 +11,10 @@ import { AnalyticsHelper } from "@/src/utils/analytics";
 
 interface BottomSubmitProps {
   sessionId: number;
+  isPastSession?: boolean;
 }
 
-export function BottomSubmit({ sessionId }: BottomSubmitProps) {
+export function BottomSubmit({ sessionId, isPastSession }: BottomSubmitProps) {
   const [message, setMessage] = useState("");
 
   const router = useRouter();
@@ -42,13 +43,29 @@ export function BottomSubmit({ sessionId }: BottomSubmitProps) {
   });
 
   const handleApply = () => {
+    if (isPastSession) {
+      Alert.alert("신청 불가", "이미 시작 시간이 지난 러닝 모임입니다.");
+      return;
+    }
+
     joinMutation.mutate(message);
+  };
+
+  const getButtonText = () => {
+    if (isPastSession) return "마감된 모임입니다";
+    if (joinMutation.isPending) return "신청 중";
+    return "참여 신청하기";
   };
 
   return (
     <View style={styles.container}>
       <Input
-        placeholder="호스트에게 한마디 (선택)"
+        editable={!isPastSession}
+        placeholder={
+          isPastSession
+            ? "마감된 모임에는 작성할 수 없습니다."
+            : "호스트에게 한마디 (선택)"
+        }
         value={message}
         onChangeText={setMessage}
         wrapperStyle={styles.inputWrapper}
@@ -59,9 +76,9 @@ export function BottomSubmit({ sessionId }: BottomSubmitProps) {
         size="lg"
         fullWidth
         onPress={handleApply}
-        disabled={joinMutation.isPending}
+        disabled={joinMutation.isPending || isPastSession}
       >
-        {joinMutation.isPending ? "신청 중" : "참여 신청하기"}
+        {getButtonText()}
       </Button>
     </View>
   );

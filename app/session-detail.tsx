@@ -57,6 +57,8 @@ export default function SessionDetailScreen() {
     );
   }
 
+  const isPastSession = new Date() > new Date(data.startAt);
+
   const participants = data.participants ?? [];
   const participantCount = participants.length;
 
@@ -216,7 +218,7 @@ export default function SessionDetailScreen() {
           </View>
         </View>
         <View style={styles.submitSection}>
-          <BottomSubmit sessionId={sessionId} />
+          <BottomSubmit sessionId={sessionId} isPastSession={isPastSession} />
         </View>
       </ScrollView>
     </View>
