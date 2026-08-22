@@ -78,7 +78,12 @@ export function NearbyList({ x, y }: NearbyListProps) {
             <NearbyItem
               key={session.id}
               session={session}
-              onPress={() => router.push("/(main)/search")}
+              onPress={() =>
+                router.push({
+                  pathname: "/session-detail",
+                  params: { id: session.id },
+                })
+              }
             />
           ))}
       </View>
