@@ -4,6 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "RunSpot",
   slug: "runspot_mobile",
+  scheme: "runspot",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./src/assets/icon.png",
