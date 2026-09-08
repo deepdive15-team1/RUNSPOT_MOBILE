@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RunSpot</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #ffffff;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI",
+          Roboto, sans-serif;
+      }
+
+      .content-wrapper {
+        text-align: center;
+        width: 100%;
+        max-width: 400px;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+
+      .app-icon {
+        width: 140px;
+        height: 140px;
+        margin-bottom: 16px;
+        border-radius: 26px;
+      }
+
+      h2 {
+        margin: 0 0 8px 0;
+        font-size: 22px;
+        color: #222;
+      }
+
+      p {
+        color: #666;
+        font-size: 15px;
+        line-height: 1.5;
+        margin: 0 0 32px 0;
+      }
+
+      #openBtn {
+        width: 85%;
+        padding: 16px 0;
+        font-size: 16px;
+        background-color: #2b7fff;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(43, 127, 255, 0.3);
+        transition: background-color 0.2s ease;
+      }
+
+      #openBtn:active {
+        background-color: #1c66d8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-wrapper">
+      <div>
+        <img src="./logo.svg" alt="RunSpot Logo" class="app-icon" />
+      </div>
+
+      <h2>RunSpot 앱으로 이동합니다</h2>
+      <p>더 많은 러닝 정보와 코스는<br />런스팟 앱에서 확인할 수 있습니다.</p>
+
+      <button id="openBtn">런스팟 앱 열기 / 다운로드</button>
+    </div>
+
+    <script>
+      document.getElementById("openBtn").addEventListener("click", () => {
+        const userAgent = navigator.userAgent.toLowerCase();
+
+        // TODO:[Release] 플레이스토어 출시 후 플레이스토어 주소로 변경
+        const FALLBACK_URL = "https://m.onestore.co.kr/v2/ko-kr/app/0001008176";
+
+        if (userAgent.indexOf("android") > -1) {
+          const intentUrl = `intent://my-page#Intent;scheme=runspot;package=com.runspot.app;S.browser_fallback_url=${encodeURIComponent(FALLBACK_URL)};end;`;
+          window.location.href = intentUrl;
+        } else {
+          const deepLink = "runspot://my-page";
+          let isAppOpened = false;
+
+          window.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+              isAppOpened = true;
+            }
+          });
+
+          window.location.href = deepLink;
+
+          setTimeout(() => {
+            if (!isAppOpened) {
+              window.location.href = FALLBACK_URL;
+            }
+          }, 2000);
+        }
+      });
+    </script>
+  </body>
+</html>
