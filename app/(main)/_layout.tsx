@@ -51,6 +51,14 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
+        name="community"
+        options={{
+          title: "커뮤니티",
+          tabBarLabel: "커뮤니티",
+          tabBarIcon: tabIcon("people-outline"),
+        }}
+      />
+      <Tabs.Screen
         name="chat"
         options={{
           title: "채팅",
