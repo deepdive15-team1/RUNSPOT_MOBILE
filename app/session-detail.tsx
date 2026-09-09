@@ -125,7 +125,7 @@ export default function SessionDetailScreen() {
                   { backgroundColor: colors.greenLight },
                 ]}
               >
-                <LocationSvg width={20} height={20} />
+                <LocationSvg width={20} height={20} color="#00A63E" />
               </View>
               <View style={styles.infoTextGroup}>
                 <Text style={styles.infoLabel}>모임 장소</Text>
