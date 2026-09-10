@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, Image, Share } from "react-native";
 
 import { Button } from "../common/button/Button";
 
-import type { PostSummaryResponse } from "@/src/api/community/communityApi.mock";
 import MenuIcon from "@/src/assets/icon/chat/menu.svg";
 import AavtarIcon from "@/src/assets/icon/common/avatar.svg";
 import CommentIcon from "@/src/assets/icon/community/comment.svg";
@@ -12,6 +11,7 @@ import ShareIcon from "@/src/assets/icon/community/share.svg";
 import LocationIcon from "@/src/assets/icon/session-detail/location.svg";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { PostSummaryResponse } from "@/src/types/api/community";
 import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export type FeedPost = PostSummaryResponse & {

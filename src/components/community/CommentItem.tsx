@@ -4,10 +4,10 @@ import { Swipeable } from "react-native-gesture-handler";
 
 import { Button } from "../common/button/Button";
 
-import type { CommentResponse } from "@/src/api/community/communityApi.mock";
 import AvatarIcon from "@/src/assets/icon/common/avatar.svg";
 import ReplyIcon from "@/src/assets/icon/community/reply.svg";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { CommentResponse } from "@/src/types/api/community";
 
 interface CommentItemProps {
   comment: CommentResponse;
