@@ -11,11 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import {
-  getPosts,
-  type BoardType,
-  type PostSort,
-} from "@/src/api/community/communityApi.mock";
+import { getPosts } from "@/src/api/community/communityApi.mock";
 import EditIcon from "@/src/assets/icon/community/edit.svg";
 import SearchIcon from "@/src/assets/icon/search.svg";
 import { Input } from "@/src/components/common/Input/Input";
@@ -25,6 +21,7 @@ import { LoadingScreen } from "@/src/components/common/loading/LoadingScreen";
 import { ReportModal } from "@/src/components/common/modal/ReportModal";
 import PostCard, { type FeedPost } from "@/src/components/community/PostCard";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { BoardType, PostSort } from "@/src/types/api/community";
 import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export default function CommunityScreen() {
@@ -208,6 +205,8 @@ export default function CommunityScreen() {
           AnalyticsHelper.logEvent("community_write_clicked", {
             tab: activeTab,
           });
+
+          router.push("/post-create");
         }}
       >
         <EditIcon />

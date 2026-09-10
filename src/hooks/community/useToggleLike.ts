@@ -4,10 +4,10 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 
-import type {
-  PostListResponse,
+import {
   PostDetailResponse,
-} from "@/src/api/community/communityApi.mock";
+  PostListResponse,
+} from "@/src/types/api/community";
 
 // TODO[API]: 게시글 좋아요 토글 API 연동
 const postLikeAPI = async (_postId: number) => {

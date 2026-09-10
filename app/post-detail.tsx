@@ -4,7 +4,6 @@ import { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   Pressable,
   Image,
@@ -24,7 +23,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   getPostDetail,
   getComments,
-  type CommentResponse,
 } from "@/src/api/community/communityApi.mock";
 import BackIcon from "@/src/assets/icon/back.svg";
 import AavtarIcon from "@/src/assets/icon/common/avatar.svg";
@@ -40,8 +38,10 @@ import { LoadingScreen } from "@/src/components/common/loading/LoadingScreen";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
 import { ReportModal } from "@/src/components/common/modal/ReportModal";
 import CommentItem from "@/src/components/community/CommentItem";
-import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { styles } from "@/src/components/community/styles/PostDetail.styles";
+import { colors, spacing } from "@/src/constants";
 import { useToggleLike } from "@/src/hooks/community/useToggleLike";
+import { CommentResponse } from "@/src/types/api/community";
 import { AnalyticsHelper } from "@/src/utils/analytics";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -557,208 +557,3 @@ export default function PostDetailScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  navBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: spacing.base,
-    backgroundColor: colors.bg,
-  },
-  headerContainer: { backgroundColor: colors.bg },
-  media: { aspectRatio: 1, backgroundColor: colors.gray100 },
-  mapContainer: { width: "100%", height: 350 },
-  courseInfoBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: spacing.base,
-    backgroundColor: colors.gray100,
-    gap: spacing.xs,
-  },
-  courseInfoText: {
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.bold,
-    color: colors.text,
-  },
-  pageBadge: {
-    position: "absolute",
-    bottom: spacing.md,
-    alignSelf: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  pageBadgeText: {
-    color: colors.white,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.bold,
-  },
-  postInfo: { padding: spacing.base },
-  authorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: spacing.md,
-  },
-  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: spacing.sm },
-  authorName: {
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.bold,
-    color: colors.text,
-  },
-  createdAt: { fontSize: fontSizes.xs, color: colors.gray400 },
-  content: {
-    fontSize: fontSizes.base,
-    color: colors.text,
-    lineHeight: 24,
-    marginBottom: spacing.sm,
-  },
-  hashtags: {
-    fontSize: fontSizes.sm,
-    color: colors.main,
-    marginBottom: spacing.md,
-  },
-  actions: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: spacing.sm,
-  },
-  actionLeft: { flexDirection: "row", gap: spacing.lg },
-  actionButtonZeroPad: { paddingHorizontal: 0, paddingVertical: 0 },
-  actionText: {
-    fontSize: fontSizes.sm,
-    color: colors.gray500,
-    fontWeight: fontWeights.medium,
-  },
-  likes: {
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.bold,
-    color: colors.text,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.gray100,
-    marginVertical: spacing.md,
-  },
-  previewContainer: {
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing.xxl,
-  },
-  previewTitle: {
-    fontSize: fontSizes.lg,
-    fontWeight: fontWeights.bold,
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  viewMoreText: {
-    fontSize: fontSizes.sm,
-    color: colors.gray500,
-    fontWeight: fontWeights.medium,
-  },
-  fakeInputContainer: {
-    padding: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray200,
-    backgroundColor: colors.bg,
-  },
-  fakeInputButton: {
-    backgroundColor: colors.gray100,
-    borderRadius: 24,
-    paddingVertical: Platform.OS === "ios" ? 12 : 10,
-    justifyContent: "flex-start",
-    paddingHorizontal: spacing.md,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  bottomSheet: {
-    height: "75%",
-    backgroundColor: colors.bg,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: "hidden",
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
-  },
-  sheetTitle: {
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.bold,
-    color: colors.text,
-  },
-  sheetClose: {
-    fontSize: fontSizes.sm,
-    color: colors.gray500,
-    fontWeight: fontWeights.bold,
-  },
-  inputContainer: {
-    padding: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray200,
-    backgroundColor: colors.bg,
-  },
-  replyTargetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.xs,
-    paddingBottom: spacing.sm,
-    alignItems: "center",
-  },
-  replyTargetText: { fontSize: fontSizes.xs, color: colors.gray500 },
-  replyCancel: {
-    fontSize: fontSizes.xs,
-    color: colors.main,
-    fontWeight: fontWeights.bold,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.gray100,
-    borderRadius: 24,
-    paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === "ios" ? spacing.md : spacing.xs,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: fontSizes.sm,
-    color: colors.text,
-    maxHeight: 100,
-  },
-  sendBtn: { marginLeft: spacing.sm },
-  menuOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 100,
-  },
-  menuContainer: {
-    width: 250,
-    backgroundColor: colors.bg,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  menuItem: {
-    paddingVertical: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
-  },
-  menuText: {
-    fontSize: fontSizes.base,
-    color: colors.text,
-    fontWeight: fontWeights.medium,
-  },
-  menuTextRed: {
-    fontSize: fontSizes.base,
-    color: colors.error,
-    fontWeight: fontWeights.medium,
-  },
-});

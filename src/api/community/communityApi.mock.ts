@@ -1,71 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-export type BoardType = "GENERAL" | "COURSE";
-export type PostSort = "LATEST" | "POPULAR";
-export type PostStatus = "PUBLISHED" | "DRAFT" | "DELETED";
-export type CommentStatus = "ACTIVE" | "DELETED";
-
-export interface AuthorResponse {
-  userId: number;
-  name: string;
-  mannerTemperature?: number;
-}
-
-export interface PostSummaryResponse {
-  postId: number;
-  boardType: BoardType;
-  title: string;
-  content: string;
-  author: AuthorResponse;
-  imageKeys: string[];
-  tags: string[];
-  likeCount: number;
-  commentCount: number;
-  viewCount: number;
-  createdAt: string;
-}
-
-export interface PostListResponse {
-  items: PostSummaryResponse[];
-  nextCursor: string | null;
-  hasNext: boolean;
-}
-
-export interface PostDetailResponse extends Omit<
+import {
+  BoardType,
+  CommentResponse,
+  PostDetailResponse,
+  PostListResponse,
+  PostSort,
   PostSummaryResponse,
-  "postId"
-> {
-  postId: number;
-  runningRecordId: number | null;
-  status: PostStatus;
-  liked: boolean;
-  scrapped: boolean;
-  courseScrapped: boolean;
-  mine: boolean;
-  updatedAt: string;
-
-  _mockRouteData?: {
-    distance: number;
-    routePolyline: { latitude: number; longitude: number }[];
-    markers: {
-      id: number;
-      latitude: number;
-      longitude: number;
-      title: string;
-      description: string;
-    }[];
-  };
-}
-
-export interface CommentResponse {
-  commentId: number;
-  parentId: number | null;
-  authorId: number;
-  authorName: string;
-  content: string;
-  status: CommentStatus;
-  createdAt: string;
-  mine?: boolean;
-}
+  PostUpsertRequest,
+} from "@/src/types/api/community";
 
 export const getPosts = async ({
   boardType,
@@ -84,7 +26,7 @@ export const getPosts = async ({
 
   const mockItems: PostSummaryResponse[] = Array.from({ length: 5 }).map(
     (_, i) => ({
-      postId: cursor ? parseInt(cursor) + i : i + 1,
+      postId: cursor ? parseInt(cursor) + i + 1 : i + 1,
       boardType,
       title: boardType === "GENERAL" ? "러닝화 추천" : "여의도 코스",
       content: "테스트 내용입니다.",
@@ -195,4 +137,30 @@ export const getComments = async (
       mine: false,
     },
   ];
+};
+
+export const createPost = async (payload: PostUpsertRequest) => {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return { postId: Math.floor(Math.random() * 1000) };
+};
+
+export const saveDraftPost = async (payload: PostUpsertRequest) => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return { postId: Math.floor(Math.random() * 1000) };
+};
+
+export const uploadImage = async (localUri: string): Promise<string> => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  return `s3-uploaded-key-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+};
+
+export const editPost = async ({
+  postId,
+  payload,
+}: {
+  postId: number;
+  payload: PostUpsertRequest;
+}) => {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return { postId };
 };
