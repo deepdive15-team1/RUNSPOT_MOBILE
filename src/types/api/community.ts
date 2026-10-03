@@ -14,13 +14,13 @@ export interface PostSummaryResponse {
   boardType: BoardType;
   title: string;
   content: string;
-  author: AuthorResponse;
-  imageKeys: string[];
-  tags: string[];
+  authorName: string;
+  thumbnailKey: string | null;
   likeCount: number;
   commentCount: number;
   viewCount: number;
   createdAt: string;
+  liked: boolean;
 }
 
 export interface PostListResponse {
@@ -29,17 +29,24 @@ export interface PostListResponse {
   hasNext: boolean;
 }
 
-export interface PostDetailResponse extends Omit<
-  PostSummaryResponse,
-  "postId"
-> {
+export interface PostDetailResponse {
   postId: number;
+  boardType: BoardType;
+  title: string;
+  content: string;
+  author: AuthorResponse;
+  imageKeys: string[];
+  tags: string[];
   runningRecordId: number | null;
+  likeCount: number;
+  commentCount: number;
+  viewCount: number;
   status: PostStatus;
   liked: boolean;
   scrapped: boolean;
   courseScrapped: boolean;
   mine: boolean;
+  createdAt: string;
   updatedAt: string;
 
   _mockRouteData?: {
@@ -70,8 +77,40 @@ export interface PostUpsertRequest {
   boardType: BoardType;
   title: string;
   content: string;
-  runningRecordId?: number | null;
+  runningRecordId?: number | null | undefined;
   imageKeys?: string[];
   tags?: string[];
   status: PostStatus;
+}
+
+export interface GetPostsParams {
+  boardType?: "GENERAL" | "COURSE";
+  sort?: "LATEST" | "POPULAR";
+  q?: string;
+  cursor?: string;
+  size?: number;
+}
+
+export interface CreateCommentRequest {
+  parentId?: number;
+  content: string;
+}
+
+export interface PresignedFileInfo {
+  fileName: string;
+  contentType: string;
+  size: number;
+}
+
+export interface PresignedUrlRequest {
+  domain: "POST";
+  files: PresignedFileInfo[];
+}
+
+export interface PresignedUrlResponse {
+  items: {
+    imageKey: string;
+    uploadUrl: string;
+    expiresIn: number;
+  }[];
 }

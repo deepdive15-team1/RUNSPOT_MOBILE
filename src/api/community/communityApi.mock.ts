@@ -1,46 +1,73 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-  BoardType,
   CommentResponse,
+  CreateCommentRequest,
+  GetPostsParams,
   PostDetailResponse,
   PostListResponse,
   PostSort,
   PostSummaryResponse,
   PostUpsertRequest,
+  PresignedUrlRequest,
+  PresignedUrlResponse,
 } from "@/src/types/api/community";
 
+// 임시저장
+export const getDraftPosts = async (): Promise<PostDetailResponse[]> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return [];
+};
+
+export const saveDraftPost = async (
+  payload: PostUpsertRequest,
+): Promise<PostDetailResponse> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return {
+    postId: Math.floor(Math.random() * 1000),
+    boardType: payload.boardType,
+    title: payload.title,
+    content: payload.content,
+    runningRecordId: payload.runningRecordId || null,
+    imageKeys: payload.imageKeys || [],
+    tags: payload.tags || [],
+    status: "DRAFT",
+    author: { userId: 1, name: "러너김" },
+    likeCount: 0,
+    commentCount: 0,
+    viewCount: 0,
+    liked: false,
+    scrapped: false,
+    courseScrapped: false,
+    mine: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+// 게시글 기본 CRUD
 export const getPosts = async ({
   boardType,
   sort,
   q,
   cursor,
   size = 20,
-}: {
-  boardType: BoardType;
-  sort: PostSort;
-  q?: string;
-  cursor: string | null;
-  size?: number;
-}): Promise<PostListResponse> => {
+}: GetPostsParams): Promise<PostListResponse> => {
   await new Promise((resolve) => setTimeout(resolve, 800));
 
   const mockItems: PostSummaryResponse[] = Array.from({ length: 5 }).map(
     (_, i) => ({
       postId: cursor ? parseInt(cursor) + i + 1 : i + 1,
-      boardType,
+      boardType: boardType || "GENERAL",
       title: boardType === "GENERAL" ? "러닝화 추천" : "여의도 코스",
       content: "테스트 내용입니다.",
-      author: {
-        userId: 1,
-        name: "러너김",
-      },
-      imageKeys:
-        boardType === "GENERAL" ? ["https://picsum.photos/400/300"] : [],
-      tags: ["#러닝"],
+      authorName: "러너김",
+      thumbnailKey:
+        boardType === "GENERAL" ? "https://picsum.photos/400/300" : null,
       likeCount: 24,
       commentCount: 5,
       viewCount: 100,
       createdAt: new Date().toISOString(),
+      liked: false,
     }),
   );
 
@@ -56,7 +83,7 @@ export const getPostDetail = async (
   postId: number,
 ): Promise<PostDetailResponse> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
-  const isCourse = postId % 2 !== 0; // 임시 분기
+  const isCourse = postId % 2 !== 0;
 
   return {
     postId,
@@ -101,6 +128,86 @@ export const getPostDetail = async (
   };
 };
 
+export const createPost = async (
+  payload: PostUpsertRequest,
+): Promise<PostDetailResponse> => {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return {
+    postId: Math.floor(Math.random() * 1000),
+    boardType: payload.boardType,
+    title: payload.title,
+    content: payload.content,
+    runningRecordId: payload.runningRecordId || null,
+    imageKeys: payload.imageKeys || [],
+    tags: payload.tags || [],
+    status: payload.status,
+    author: { userId: 1, name: "러너김" },
+    likeCount: 0,
+    commentCount: 0,
+    viewCount: 0,
+    liked: false,
+    scrapped: false,
+    courseScrapped: false,
+    mine: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+export const editPost = async (
+  postId: number,
+  payload: PostUpsertRequest,
+): Promise<PostDetailResponse> => {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  return {
+    postId,
+    boardType: payload.boardType,
+    title: payload.title,
+    content: payload.content,
+    runningRecordId: payload.runningRecordId || null,
+    imageKeys: payload.imageKeys || [],
+    tags: payload.tags || [],
+    status: payload.status,
+    author: { userId: 1, name: "러너김" },
+    likeCount: 15,
+    commentCount: 3,
+    viewCount: 42,
+    liked: false,
+    scrapped: false,
+    courseScrapped: false,
+    mine: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+export const deletePost = async (postId: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+};
+
+// 게시글 상호작용 (좋아요, 스크랩)
+export const likePost = async (postId: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+};
+
+export const cancelLikePost = async (postId: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+};
+
+export const scrapPost = async (postId: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+};
+
+export const cancelScrapPost = async (postId: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+};
+
+export const getMyScraps = async (): Promise<PostSummaryResponse[]> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return [];
+};
+
+// 댓글
 export const getComments = async (
   _postId: number,
 ): Promise<CommentResponse[]> => {
@@ -139,28 +246,46 @@ export const getComments = async (
   ];
 };
 
-export const createPost = async (payload: PostUpsertRequest) => {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  return { postId: Math.floor(Math.random() * 1000) };
-};
-
-export const saveDraftPost = async (payload: PostUpsertRequest) => {
+export const createComment = async (
+  postId: number,
+  data: CreateCommentRequest,
+): Promise<CommentResponse> => {
   await new Promise((resolve) => setTimeout(resolve, 500));
-  return { postId: Math.floor(Math.random() * 1000) };
+  return {
+    commentId: Math.floor(Math.random() * 10000),
+    parentId: data.parentId || null,
+    authorId: 1,
+    authorName: "러너김",
+    content: data.content,
+    status: "ACTIVE",
+    createdAt: new Date().toISOString(),
+    mine: true,
+  };
 };
 
-export const uploadImage = async (localUri: string): Promise<string> => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return `s3-uploaded-key-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+export const deleteComment = async (commentId: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
 };
 
-export const editPost = async ({
-  postId,
-  payload,
-}: {
-  postId: number;
-  payload: PostUpsertRequest;
-}) => {
+// 파일 업로드
+export const getPresignedUrls = async (
+  payload: PresignedUrlRequest,
+): Promise<PresignedUrlResponse> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  return {
+    items: payload.files.map((file, index) => ({
+      imageKey: `mock-image-key-${Date.now()}-${index}.jpg`,
+      uploadUrl: `https://mock-s3.com/upload/${index}`,
+      expiresIn: 300,
+    })),
+  };
+};
+
+export const uploadFileToS3 = async (
+  uploadUrl: string,
+  file: Blob,
+  contentType: string,
+): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 800));
-  return { postId };
 };
