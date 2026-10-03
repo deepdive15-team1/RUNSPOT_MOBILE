@@ -19,11 +19,15 @@ import AvatarIcon from "@/src/assets/icon/common/avatar.svg";
 import { Input } from "@/src/components/common/Input/Input";
 import { Button } from "@/src/components/common/button/Button";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 import { isEmpty } from "@/src/utils";
 import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export default function LoginScreen() {
   const router = useRouter();
+
+  const setStoreLogin = useAuthStore((state) => state.login);
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<Record<string, string>>({});
@@ -55,8 +59,12 @@ export default function LoginScreen() {
         setRefreshToken(result.refreshToken),
       ]);
 
-      // 로그인 트래픽 기록
       if (result.userId) {
+        setStoreLogin({
+          userId: result.userId,
+          name: result.name || "사용자",
+        });
+        // [Analytics] 로그인 트래픽 기록
         await AnalyticsHelper.setUserId(String(result.userId));
       }
 
