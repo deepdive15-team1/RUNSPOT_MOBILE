@@ -38,7 +38,7 @@ const PostCard = React.memo(
           process.env.EXPO_PUBLIC_SHARE_URL ||
           "https://landing-lilac-zeta.vercel.app";
         await Share.share({
-          message: `[RunSpot] ${post.author.name} 님의 게시글\n ${shareUrl}`,
+          message: `[RunSpot] ${post?.authorName || "알 수 없음"} 님의 게시글\n ${shareUrl}`,
         });
       } catch (error) {
         console.error("공유하기 에러:", error);
@@ -53,7 +53,9 @@ const PostCard = React.memo(
         <View style={styles.header}>
           <View style={styles.authorInfo}>
             <AavtarIcon color={colors.gray400} style={styles.avatar} />
-            <Text style={styles.authorName}>{post.author.name}</Text>
+            <Text style={styles.authorName}>
+              {post?.authorName || "알 수 없음"}
+            </Text>
             <Text style={styles.createdAt}>
               {new Date(post.createdAt).toLocaleDateString()}
             </Text>
@@ -68,9 +70,9 @@ const PostCard = React.memo(
           </Button>
         </View>
 
-        {post.boardType === "GENERAL" && post.imageKeys?.length > 0 && (
+        {post.boardType === "GENERAL" && post.thumbnailKey && (
           <Image
-            source={{ uri: post.imageKeys[0] }}
+            source={{ uri: post.thumbnailKey }}
             style={styles.media}
             resizeMode="cover"
           />
@@ -107,7 +109,12 @@ const PostCard = React.memo(
               variant="text"
               size="sm"
               startIcon={
-                <HeartIcon width={24} height={24} color={colors.black} />
+                <HeartIcon
+                  width={24}
+                  height={24}
+                  color={post.liked ? colors.red : colors.black}
+                  fill={post.liked ? colors.red : "none"}
+                />
               }
               textStyle={styles.actionText}
               wrapperStyle={styles.actionButtonZeroPad}
@@ -140,10 +147,11 @@ const PostCard = React.memo(
         <View style={styles.contentContainer}>
           <Text style={styles.likes}>좋아요 {post.likeCount}개</Text>
           <Text style={styles.content} numberOfLines={2}>
-            <Text style={styles.authorNameBold}>{post.author.name} </Text>
+            <Text style={styles.authorNameBold}>
+              {post?.authorName || "알 수 없음"}
+            </Text>
             {post.content}
           </Text>
-          <Text style={styles.hashtags}>{post.tags.join(" ")}</Text>
 
           <Button
             variant="text"

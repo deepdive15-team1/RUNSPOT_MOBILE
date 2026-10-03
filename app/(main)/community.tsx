@@ -1,4 +1,9 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 import { useState, useCallback, useMemo } from "react";
 import {
@@ -9,9 +14,11 @@ import {
   Pressable,
   Modal,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 
-import { getPosts } from "@/src/api/community/communityApi.mock";
+import { CommunityApi } from "@/src/api/community/communityApi.index";
+import { ReportApi } from "@/src/api/report/reportApi.index";
 import EditIcon from "@/src/assets/icon/community/edit.svg";
 import SearchIcon from "@/src/assets/icon/search.svg";
 import { Input } from "@/src/components/common/Input/Input";
@@ -21,11 +28,15 @@ import { LoadingScreen } from "@/src/components/common/loading/LoadingScreen";
 import { ReportModal } from "@/src/components/common/modal/ReportModal";
 import PostCard, { type FeedPost } from "@/src/components/community/PostCard";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 import { BoardType, PostSort } from "@/src/types/api/community";
+import { ReportReasonCode } from "@/src/types/api/report";
 import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export default function CommunityScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
 
   const [activeTab, setActiveTab] = useState<BoardType>("GENERAL");
   const [activeSort, setActiveSort] = useState<PostSort>("LATEST");
@@ -40,11 +51,11 @@ export default function CommunityScreen() {
       queryKey: ["communityPosts", activeTab, activeSort, searchKeyword],
       initialPageParam: null as string | null,
       queryFn: ({ pageParam }) =>
-        getPosts({
+        CommunityApi.getPosts({
           boardType: activeTab,
           sort: activeSort,
           q: searchKeyword,
-          cursor: pageParam,
+          cursor: pageParam ?? undefined,
         }),
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
@@ -66,24 +77,82 @@ export default function CommunityScreen() {
   }, []);
 
   const handleReportSubmit = useCallback(
-    (reason: string, details: string) => {
-      // [Analytics] 게시글 신고 트래픽 기록
-      AnalyticsHelper.logEvent("post_reported", {
-        postId: selectedPost?.postId,
-        reason,
-      });
+    async (reasonCode: ReportReasonCode, details: string) => {
+      if (!selectedPost) return;
 
-      // TODO[API]: 게시글 신고 API 연동
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const apiPayload = {
-        postId: selectedPost?.postId,
-        reason,
-        details,
-      };
-      setReportVisible(false);
+      try {
+        await ReportApi.createReport({
+          targetType: "POST",
+          targetId: selectedPost.postId,
+          reasonCode: reasonCode,
+          detail: details,
+        });
+
+        // [Analytics] 게시글 신고 트래픽 기록
+        AnalyticsHelper.logEvent("post_reported", {
+          postId: selectedPost.postId,
+          reasonCode,
+        });
+        Alert.alert("신고 완료", "신고가 정상적으로 접수되었습니다.");
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          if (error.response?.status === 409) {
+            Alert.alert("알림", "이미 신고한 게시글입니다.");
+            return;
+          }
+        }
+
+        Alert.alert(
+          "오류",
+          "신고 접수에 실패했습니다. 잠시후 다시 시도해주세요.",
+        );
+      } finally {
+        setReportVisible(false);
+      }
     },
     [selectedPost],
   );
+
+  const toggleScrapMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedPost) return;
+      await CommunityApi.scrapPost(selectedPost.postId);
+    },
+    onSuccess: () => {
+      Alert.alert("알림", "관심 게시물로 저장되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["myScraps"] });
+    },
+    onError: () => {
+      Alert.alert("오류", "관심 게시물 설정 중 문제가 발생했습니다.");
+    },
+  });
+
+  const handleDeletePost = useCallback(() => {
+    if (!selectedPost) return;
+    setMenuVisible(false);
+
+    Alert.alert("게시글 삭제", "정말로 이 게시글을 삭제하시겠습니까?", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "삭제",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await CommunityApi.deletePost(selectedPost.postId);
+
+            AnalyticsHelper.logEvent("post_deleted", {
+              postId: selectedPost.postId,
+            });
+            queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
+
+            Alert.alert("알림", "게시글이 삭제되었습니다.");
+          } catch {
+            Alert.alert("오류", "게시글 삭제에 실패했습니다.");
+          }
+        },
+      },
+    ]);
+  }, [selectedPost, queryClient]);
 
   const handlePressPost = useCallback(
     (id: string) => {
@@ -104,6 +173,8 @@ export default function CommunityScreen() {
     ),
     [handlePressMore, handlePressPost],
   );
+
+  const isMyPost = selectedPost?.authorName === user?.name;
 
   if (isLoading) return <LoadingScreen message="게시글을 불러오는 중..." />;
 
@@ -218,45 +289,81 @@ export default function CommunityScreen() {
           onPress={() => setMenuVisible(false)}
         >
           <View style={styles.menuContainer}>
-            <Button
-              variant="text"
-              fullWidth
-              textStyle={styles.menuTextRed}
-              wrapperStyle={styles.menuItem}
-              onPress={() => {
-                setMenuVisible(false);
-                setReportVisible(true);
-              }}
-            >
-              신고하기
-            </Button>
-            {activeTab === "COURSE" && (
-              <Button
-                variant="text"
-                fullWidth
-                textStyle={styles.menuText}
-                wrapperStyle={styles.menuItem}
-                onPress={() => setMenuVisible(false)}
-              >
-                러닝 코스 저장
-              </Button>
+            {isMyPost ? (
+              <>
+                <Button
+                  variant="text"
+                  fullWidth
+                  textStyle={styles.menuText}
+                  wrapperStyle={styles.menuItem}
+                  onPress={() => {
+                    if (!selectedPost) return;
+
+                    setMenuVisible(false);
+                    router.push({
+                      pathname: "post-create",
+                      params: { postId: selectedPost.postId },
+                    });
+                  }}
+                >
+                  게시글 수정
+                </Button>
+                <Button
+                  variant="text"
+                  fullWidth
+                  textStyle={styles.menuTextRed}
+                  wrapperStyle={styles.menuItem}
+                  onPress={handleDeletePost}
+                >
+                  게시글 삭제
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="text"
+                  fullWidth
+                  textStyle={styles.menuTextRed}
+                  wrapperStyle={styles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    setReportVisible(true);
+                  }}
+                >
+                  신고하기
+                </Button>
+                {activeTab === "COURSE" && (
+                  <Button
+                    variant="text"
+                    fullWidth
+                    textStyle={styles.menuText}
+                    wrapperStyle={styles.menuItem}
+                    onPress={() => setMenuVisible(false)}
+                  >
+                    러닝 코스 저장
+                  </Button>
+                )}
+                <Button
+                  variant="text"
+                  fullWidth
+                  textStyle={styles.menuText}
+                  wrapperStyle={styles.menuItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    toggleScrapMutation.mutate();
+                  }}
+                >
+                  관심 게시물로 저장
+                </Button>
+              </>
             )}
-            <Button
-              variant="text"
-              fullWidth
-              textStyle={styles.menuText}
-              wrapperStyle={styles.menuItem}
-              onPress={() => setMenuVisible(false)}
-            >
-              관심 게시물로 저장
-            </Button>
           </View>
         </Pressable>
       </Modal>
 
       <ReportModal
         visible={isReportVisible}
-        targetName={selectedPost?.author.name}
+        targetName={selectedPost?.authorName}
         onClose={() => setReportVisible(false)}
         onSubmit={handleReportSubmit}
       />
@@ -331,10 +438,13 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   menuItem: {
-    padding: spacing.lg,
+    paddingVertical: 17,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray100,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 56,
   },
   menuText: {
     fontSize: fontSizes.base,

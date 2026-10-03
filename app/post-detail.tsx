@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState, useCallback, useMemo } from "react";
 import {
@@ -17,13 +18,12 @@ import {
   Dimensions,
   Share,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import {
-  getPostDetail,
-  getComments,
-} from "@/src/api/community/communityApi.mock";
+import { CommunityApi } from "@/src/api/community/communityApi.index";
+import { ReportApi } from "@/src/api/report/reportApi.index";
 import BackIcon from "@/src/assets/icon/back.svg";
 import AavtarIcon from "@/src/assets/icon/common/avatar.svg";
 import AllowSendIcon from "@/src/assets/icon/community/arrow-up.svg";
@@ -41,6 +41,7 @@ import CommentItem from "@/src/components/community/CommentItem";
 import { styles } from "@/src/components/community/styles/PostDetail.styles";
 import { colors, spacing } from "@/src/constants";
 import { useToggleLike } from "@/src/hooks/community/useToggleLike";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 import { CommentResponse } from "@/src/types/api/community";
 import { AnalyticsHelper } from "@/src/utils/analytics";
 
@@ -52,13 +53,19 @@ interface TreeComment extends CommentResponse {
 
 export default function PostDetailScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { postId } = useLocalSearchParams<{ postId: string }>();
 
-  const { mutate: toggleLike } = useToggleLike(Number(postId));
+  const user = useAuthStore((state) => state.user);
+
+  const numericPostId = Number(postId);
+
+  const { mutate: toggleLike, isPending: isLikePending } = useToggleLike(
+    Number(postId),
+  );
 
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [isReportVisible, setReportVisible] = useState(false);
-  const [isCommentModalVisible, setCommentModalVisible] = useState(false);
 
   const [commentText, setCommentText] = useState("");
   const [replyTarget, setReplyTarget] = useState<{
@@ -66,44 +73,108 @@ export default function PostDetailScreen() {
     name: string;
   } | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
-  const { data: post, isLoading: isPostLoading } = useQuery({
-    queryKey: ["postDetail", postId],
-    queryFn: () => getPostDetail(Number(postId)),
+  const {
+    data: post,
+    isLoading: isPostLoading,
+    refetch: refetchPost,
+  } = useQuery({
+    queryKey: ["postDetail", numericPostId],
+    queryFn: () => CommunityApi.getPostDetail(Number(postId)),
   });
 
-  const { data: commentsFlat, isLoading: isCommentLoading } = useQuery<
-    CommentResponse[]
-  >({
-    queryKey: ["comments", postId],
-    queryFn: () => getComments(Number(postId)),
+  const {
+    data: commentsFlat,
+    isLoading: isCommentLoading,
+    refetch: refetchComments,
+  } = useQuery<CommentResponse[]>({
+    queryKey: ["comments", numericPostId],
+    queryFn: () => CommunityApi.getComments(Number(postId)),
   });
 
-  const handleDeleteComment = useCallback((commentId: number) => {
-    Alert.alert("댓글 삭제", "댓글을 완전히 삭제하시겠습니까?", [
+  const handleDeletePost = useCallback(() => {
+    setMenuVisible(false);
+    Alert.alert("게시글 삭제", "정말로 이 게시글을 삭제하시겠습니까?", [
       { text: "취소", style: "cancel" },
       {
         text: "삭제",
         style: "destructive",
-        onPress: () => {
-          // [Analytics] 댓글 삭제 트래픽 기록
-          AnalyticsHelper.logEvent("comment_deleted", { commentId });
-          // TODO[API]: 댓글 삭제 API 연동 및 캐시 무효화
+        onPress: async () => {
+          try {
+            await CommunityApi.deletePost(numericPostId);
+
+            // [Analytics] 게시글 삭제 트래픽 기록
+            AnalyticsHelper.logEvent("post_deleted", { postId: numericPostId });
+            queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
+
+            Alert.alert("알림", "게시글이 삭제되었습니다.", [
+              { text: "확인", onPress: () => router.back() },
+            ]);
+          } catch {
+            Alert.alert("오류", "게시글 삭제에 실패했습니다.");
+          }
         },
       },
     ]);
-  }, []);
+  }, [numericPostId, router, queryClient]);
+
+  const toggleScrapMutation = useMutation({
+    mutationFn: async () => {
+      if (post?.scrapped) {
+        await CommunityApi.cancelScrapPost(numericPostId);
+      } else {
+        await CommunityApi.scrapPost(numericPostId);
+      }
+    },
+    onSuccess: () => {
+      refetchPost();
+      queryClient.invalidateQueries({ queryKey: ["myScraps"] });
+      Alert.alert(
+        "알림",
+        post?.scrapped
+          ? "관심 게시물에서 해제되었습니다."
+          : "관심 게시물로 저장되었습니다.",
+      );
+    },
+    onError: () => {
+      Alert.alert("오류", "관심 게시물 설정 중 문제가 발생했습니다.");
+    },
+  });
+
+  const handleDeleteComment = useCallback(
+    (commentId: number) => {
+      Alert.alert("댓글 삭제", "댓글을 완전히 삭제하시겠습니까?", [
+        { text: "취소", style: "cancel" },
+        {
+          text: "삭제",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await CommunityApi.deleteComment(commentId);
+              AnalyticsHelper.logEvent("comment_deleted", { commentId });
+              refetchComments();
+            } catch {
+              Alert.alert("오류", "댓글 삭제에 실패했습니다.");
+            }
+          },
+        },
+      ]);
+    },
+    [refetchComments],
+  );
 
   const commentTree = useMemo<TreeComment[]>(() => {
     if (!commentsFlat) return [];
-    const activeComments = commentsFlat.filter((c) => c.status !== "DELETED");
+
     const map = new Map<number, TreeComment>();
     const tree: TreeComment[] = [];
 
-    activeComments.forEach((c) => {
+    commentsFlat.forEach((c) => {
       map.set(c.commentId, { ...c, replies: [] });
     });
-    activeComments.forEach((c) => {
+
+    commentsFlat.forEach((c) => {
       if (c.parentId !== null) {
         map.get(c.parentId)?.replies.push(map.get(c.commentId)!);
       } else {
@@ -115,30 +186,15 @@ export default function PostDetailScreen() {
     return tree;
   }, [commentsFlat]);
 
-  const previewComments = commentTree.slice(0, 2);
-  const isMyPost = !!post?.mine;
+  const isMyPost = !!post?.mine || post?.author?.name === user?.name;
 
   const handleEditPost = useCallback(() => {
     setMenuVisible(false);
-    // TODO[API]: 수정 화면으로 데이터 전달 및 이동
-  }, []);
-
-  const handleDeletePost = useCallback(() => {
-    setMenuVisible(false);
-    Alert.alert("게시글 삭제", "정말로 이 게시글을 삭제하시겠습니까?", [
-      { text: "취소", style: "cancel" },
-      {
-        text: "삭제",
-        style: "destructive",
-        onPress: () => {
-          // [Analytics] 게시글 삭제 트래픽 기록
-          AnalyticsHelper.logEvent("post_deleted", { postId });
-          // TODO[API]: 게시글 삭제 API 연동
-          router.back();
-        },
-      },
-    ]);
-  }, [postId, router]);
+    router.push({
+      pathname: "/post-create",
+      params: { postId: numericPostId },
+    });
+  }, [numericPostId, router]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -150,18 +206,41 @@ export default function PostDetailScreen() {
     [],
   );
 
-  const handleSubmitComment = useCallback(() => {
-    if (!commentText.trim()) return;
-    // [Analytics] 댓글/대댓글 작성 트래픽 기록
-    AnalyticsHelper.logEvent("comment_submitted", {
-      postId,
-      isReply: !!replyTarget,
-    });
+  const handleSubmitComment = useCallback(async () => {
+    if (!commentText.trim() || isSubmittingComment) return;
 
-    // TODO[API]: 댓글 작성 API 연동
-    setCommentText("");
-    setReplyTarget(null);
-  }, [commentText, postId, replyTarget]);
+    setIsSubmittingComment(true);
+    const parentId = replyTarget ? Number(replyTarget.id) : undefined;
+
+    try {
+      await CommunityApi.createComment(Number(postId), {
+        parentId,
+        content: commentText.trim(),
+      });
+
+      // [Analytics] 댓글/대댓글 작성 트래픽 기록
+      AnalyticsHelper.logEvent("comment_submitted", {
+        postId,
+        isReply: !!replyTarget,
+      });
+
+      setCommentText("");
+      setReplyTarget(null);
+      refetchComments();
+      refetchPost();
+    } catch {
+      Alert.alert("오류", "댓글 작성에 실패했습니다.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  }, [
+    commentText,
+    postId,
+    replyTarget,
+    isSubmittingComment,
+    refetchComments,
+    refetchPost,
+  ]);
 
   const handleShare = useCallback(async () => {
     try {
@@ -274,7 +353,7 @@ export default function PostDetailScreen() {
             <AavtarIcon style={styles.avatar} />
             <View>
               <Text style={styles.authorName}>
-                {post.author?.name || "사용자"}
+                {post?.author?.name || "알 수 없음"}
               </Text>
               <Text style={styles.createdAt}>
                 {new Date(post.createdAt).toLocaleDateString()}
@@ -283,7 +362,9 @@ export default function PostDetailScreen() {
           </View>
 
           <Text style={styles.content}>{post.content}</Text>
-          <Text style={styles.hashtags}>{post.tags.join(" ")}</Text>
+          {post?.tags && post.tags.length > 0 && (
+            <Text style={styles.hashtags}>{post.tags.join(" #")}</Text>
+          )}
 
           <View style={styles.actions}>
             <View style={styles.actionLeft}>
@@ -300,9 +381,10 @@ export default function PostDetailScreen() {
                 }
                 textStyle={styles.actionText}
                 wrapperStyle={styles.actionButtonZeroPad}
-                onPress={() => toggleLike()}
+                disabled={isLikePending}
+                onPress={() => toggleLike(post.liked)}
               >
-                {post.likeCount}
+                {String(post.likeCount)}
               </Button>
               <Button
                 variant="text"
@@ -310,9 +392,8 @@ export default function PostDetailScreen() {
                 startIcon={<CommentIcon width={24} height={24} />}
                 textStyle={styles.actionText}
                 wrapperStyle={styles.actionButtonZeroPad}
-                onPress={() => setCommentModalVisible(true)}
               >
-                {post.commentCount}
+                {String(post.commentCount)}
               </Button>
               <Button
                 variant="text"
@@ -354,128 +435,104 @@ export default function PostDetailScreen() {
         {renderPostContent()}
 
         <View style={styles.previewContainer}>
-          <Text style={styles.previewTitle}>댓글</Text>
-          {previewComments.map((item) => (
-            <View key={item.commentId}>{renderComment({ item })}</View>
-          ))}
-
-          {commentTree.length > 2 && (
-            <Button
-              variant="text"
-              fullWidth
-              textStyle={styles.viewMoreText}
-              onPress={() => setCommentModalVisible(true)}
-            >
-              댓글 {post?.commentCount}개 모두 보기
-            </Button>
-          )}
-          {commentTree.length === 0 && (
-            <Button
-              variant="text"
-              fullWidth
-              textStyle={styles.viewMoreText}
-              onPress={() => setCommentModalVisible(true)}
+          <Text style={styles.previewTitle}>
+            댓글 {post?.commentCount || 0}개
+          </Text>
+          {commentTree.length === 0 ? (
+            <Text
+              style={[
+                styles.viewMoreText,
+                { textAlign: "center", marginTop: 20 },
+              ]}
             >
               가장 먼저 댓글을 남겨보세요.
-            </Button>
+            </Text>
+          ) : (
+            commentTree.map((item) => (
+              <View key={item.commentId}>{renderComment({ item })}</View>
+            ))
           )}
         </View>
       </ScrollView>
 
-      <View style={styles.fakeInputContainer}>
-        <Button
-          variant="neutral"
-          fullWidth
-          textStyle={{ color: colors.gray400, textAlign: "left" }}
-          wrapperStyle={styles.fakeInputButton}
-          onPress={() => setCommentModalVisible(true)}
-        >
-          댓글을 남겨보세요
-        </Button>
-      </View>
-
-      <Modal
-        visible={isCommentModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setCommentModalVisible(false)}
+      <View
+        style={[
+          styles.inputContainer,
+          {
+            borderTopWidth: 1,
+            borderColor: colors.gray200,
+            padding: spacing.sm,
+            backgroundColor: colors.white,
+          },
+        ]}
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.modalBackdrop}>
-            <Pressable
-              style={{ flex: 1 }}
-              onPress={() => setCommentModalVisible(false)}
-            />
-
-            <View style={styles.bottomSheet}>
-              <View style={styles.sheetHeader}>
-                <Text style={styles.sheetTitle}>댓글</Text>
-                <Button
-                  variant="text"
-                  size="sm"
-                  textStyle={styles.sheetClose}
-                  onPress={() => setCommentModalVisible(false)}
-                >
-                  닫기
-                </Button>
-              </View>
-
-              <FlatList
-                data={commentTree}
-                keyExtractor={(item) => item.commentId.toString()}
-                renderItem={renderComment}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: spacing.xxl }}
-              />
-
-              <View style={styles.inputContainer}>
-                {replyTarget && (
-                  <View style={styles.replyTargetHeader}>
-                    <Text style={styles.replyTargetText}>
-                      {replyTarget.name}님에게 답글 남기는 중...
-                    </Text>
-                    <Button
-                      variant="text"
-                      size="xs"
-                      textStyle={styles.replyCancel}
-                      onPress={() => setReplyTarget(null)}
-                    >
-                      취소
-                    </Button>
-                  </View>
-                )}
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={
-                      replyTarget ? "답글을 달아주세요." : "댓글을 달아주세요."
-                    }
-                    placeholderTextColor={colors.gray400}
-                    value={commentText}
-                    onChangeText={setCommentText}
-                    multiline
-                    maxLength={300}
-                    autoFocus
-                  />
-                  <Button
-                    variant="primary"
-                    iconOnly
-                    rounded
-                    size="sm"
-                    wrapperStyle={styles.sendBtn}
-                    onPress={handleSubmitComment}
-                  >
-                    <AllowSendIcon width={16} height={16} />
-                  </Button>
-                </View>
-              </View>
-            </View>
+        {replyTarget && (
+          <View
+            style={[
+              styles.replyTargetHeader,
+              {
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              },
+            ]}
+          >
+            <Text style={styles.replyTargetText}>
+              {replyTarget.name}님에게 답글 남기는 중
+            </Text>
+            <Button
+              variant="text"
+              size="xs"
+              textStyle={styles.replyCancel}
+              onPress={() => setReplyTarget(null)}
+            >
+              취소
+            </Button>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        )}
+        <View
+          style={[
+            styles.inputWrapper,
+            {
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: colors.gray100,
+              borderRadius: 20,
+              paddingHorizontal: 12,
+            },
+          ]}
+        >
+          <TextInput
+            style={[
+              styles.textInput,
+              { flex: 1, minHeight: 40, paddingVertical: 8 },
+            ]}
+            placeholder={
+              replyTarget ? "답글을 달아주세요." : "댓글을 달아주세요."
+            }
+            placeholderTextColor={colors.gray400}
+            value={commentText}
+            onChangeText={setCommentText}
+            multiline
+            maxLength={300}
+          />
+          <Button
+            variant="primary"
+            iconOnly
+            rounded
+            size="sm"
+            wrapperStyle={styles.sendBtn}
+            onPress={handleSubmitComment}
+            disabled={isSubmittingComment || !commentText.trim()}
+          >
+            {isSubmittingComment ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <AllowSendIcon width={16} height={16} />
+            )}
+          </Button>
+        </View>
+      </View>
 
       <Modal visible={isMenuVisible} transparent animationType="fade">
         <Pressable
@@ -534,9 +591,12 @@ export default function PostDetailScreen() {
                   fullWidth
                   textStyle={styles.menuText}
                   wrapperStyle={styles.menuItem}
-                  onPress={() => setMenuVisible(false)}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    toggleScrapMutation.mutate();
+                  }}
                 >
-                  관심 게시물로 저장
+                  {post?.scrapped ? "관심 게시물 해제" : "관심 게시물로 저장"}
                 </Button>
               </>
             )}
@@ -548,10 +608,32 @@ export default function PostDetailScreen() {
         visible={isReportVisible}
         targetName={post?.author?.name}
         onClose={() => setReportVisible(false)}
-        onSubmit={(reason) => {
-          // [Analytics] 상세 게시글 신고 트래픽 기록
-          AnalyticsHelper.logEvent("post_detail_reported", { postId, reason });
-          setReportVisible(false);
+        onSubmit={async (reasonCode, detail) => {
+          try {
+            await ReportApi.createReport({
+              targetId: numericPostId,
+              targetType: "POST",
+              reasonCode,
+              detail,
+            });
+            // [Analytics] 상세 게시글 신고 트래픽 기록
+            AnalyticsHelper.logEvent("post_detail_reported", {
+              postId: numericPostId,
+              reasonCode,
+            });
+            Alert.alert("알림", "신고가 접수되었습니다.");
+          } catch (error) {
+            if (error instanceof AxiosError) {
+              if (error.response?.status === 409) {
+                Alert.alert("알림", "이미 신고한 게시글입니다.");
+                return;
+              }
+            }
+
+            Alert.alert("오류", "신고 접수에 실패했습니다. (서버 오류입니다.)");
+          } finally {
+            setReportVisible(false);
+          }
         }}
       />
     </KeyboardAvoidingView>
