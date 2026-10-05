@@ -2,8 +2,9 @@ import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { NotificationBell } from "../common/notification-bell/NotificationBell";
+
 import LogoIcon from "@/src/assets/icon/brand/logo.svg";
-import BellSvg from "@/src/assets/icon/notification/bell.svg";
 import { Button } from "@/src/components/common/button/Button";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
 
@@ -42,7 +43,7 @@ export function HomeHeader() {
             iconOnly
             onPress={() => router.push("/notifications")}
           >
-            <BellSvg width={24} height={24} />
+            <NotificationBell width={24} height={24} />
           </Button>
         </View>
       </View>

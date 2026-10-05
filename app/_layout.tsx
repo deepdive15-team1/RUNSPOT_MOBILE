@@ -5,7 +5,11 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { hydrateAccessToken, hydrateRefreshToken } from "@/src/api/authToken";
+import {
+  getAccessToken,
+  hydrateAccessToken,
+  hydrateRefreshToken,
+} from "@/src/api/authToken";
 import { setUnauthorizedHandler } from "@/src/api/axiosInstance";
 import { LoadingScreen } from "@/src/components/common/loading/LoadingScreen";
 import { StackHeaderBack } from "@/src/components/header";
@@ -25,7 +29,7 @@ export default function RootLayout() {
   const segments = useSegments();
   const [authReady, setAuthReady] = useState(false);
 
-  usePushNotifications();
+  usePushNotifications(authReady && Boolean(getAccessToken()));
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -67,6 +71,30 @@ export default function RootLayout() {
   useEffect(() => {
     if (!authReady) return;
 
+    const checkInitialNotification = async () => {
+      try {
+        const response = await Notifications.getLastNotificationResponseAsync();
+        if (response) {
+          const data = response.notification.request.content.data;
+          if (data && typeof data.type === "string") {
+            handleNotificationRouting(
+              {
+                type: data.type,
+                sessionId: parseId(data.sessionId),
+                title: parseString(data.title),
+                body: parseString(data.body),
+              },
+              router,
+            );
+          }
+        }
+      } catch {
+        console.warn("초기 알림 응답을 확인하지 못했습니다.");
+      }
+    };
+
+    checkInitialNotification();
+
     const responseListener =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
@@ -74,9 +102,9 @@ export default function RootLayout() {
         if (data && typeof data.type === "string") {
           const payload: NotificationRoutePayload = {
             type: data.type,
-            relatedId: parseId(data.relatedId),
+            sessionId: parseId(data.sessionId),
             title: parseString(data.title),
-            message: parseString(data.message),
+            body: parseString(data.body),
           };
 
           handleNotificationRouting(payload, router);

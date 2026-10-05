@@ -23,11 +23,12 @@ import {
 
 import { logoutUser } from "@/src/api/auth/logoutUser";
 import { withdrawUser } from "@/src/api/auth/withdraswUser";
+import { NotificationApi } from "@/src/api/notification/notificationApi.index";
 import RightArrowSvg from "@/src/assets/icon/my-page/rightarrow.svg";
 import SettingSvg from "@/src/assets/icon/my-page/setting.svg";
-import BellSvg from "@/src/assets/icon/notification/bell.svg";
 import { Button } from "@/src/components/common//button/Button";
 import { BannerAdComponent } from "@/src/components/common/admob/BannerAdComponent";
+import { NotificationBell } from "@/src/components/common/notification-bell/NotificationBell";
 import {
   colors,
   spacing,
@@ -98,6 +99,12 @@ export default function MyPageScreen() {
         text: "로그아웃",
         style: "destructive",
         onPress: async () => {
+          try {
+            await NotificationApi.deletePushToken();
+          } catch {
+            console.warn("푸시 토큰 해제 요청에 실패했습니다.");
+          }
+
           await logoutUser({ queryClient });
 
           // 로그아웃 트래픽 기록
@@ -173,7 +180,7 @@ export default function MyPageScreen() {
             iconOnly
             onPress={() => router.push("/notifications")}
           >
-            <BellSvg width={24} height={24} color={colors.text} />
+            <NotificationBell width={24} height={24} />
           </Button>
 
           <Pressable onPress={() => setSettingsVisible(true)} hitSlop={10}>

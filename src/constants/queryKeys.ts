@@ -46,5 +46,8 @@ export const nearbyKeys = {
 
 export const notificationKeys = {
   all: ["notifications"] as const,
-  list: () => [...notificationKeys.all, "list"] as const,
+  lists: () => [...notificationKeys.all, "list"] as const,
+  list: (unreadOnly = false) =>
+    [...notificationKeys.lists(), { unreadOnly }] as const,
+  unreadCount: () => [...notificationKeys.all, "unreadCount"] as const,
 };
