@@ -18,14 +18,12 @@ Notifications.setNotificationHandler({
 async function registerForPushNotificationsAsync(): Promise<
   string | undefined
 > {
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#007AFF",
-    });
-  }
+  await Notifications.setNotificationChannelAsync("default", {
+    name: "default",
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: "#007AFF",
+  });
 
   if (!Device.isDevice) {
     console.warn("푸시 알림은 실제 기기에서만 사용할 수 있습니다.");
@@ -55,7 +53,7 @@ async function registerForPushNotificationsAsync(): Promise<
 
 export function usePushNotifications(enabled = true) {
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || Platform.OS !== "android") return;
 
     let isActive = true;
     const register = async () => {
@@ -71,7 +69,7 @@ export function usePushNotifications(enabled = true) {
       try {
         await NotificationApi.registerPushToken({
           token,
-          platform: Platform.OS === "ios" ? "IOS" : "ANDROID",
+          platform: "ANDROID",
         });
       } catch {
         console.warn("푸시 토큰 등록에 실패했습니다.");

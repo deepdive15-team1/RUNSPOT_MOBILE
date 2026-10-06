@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -99,15 +100,17 @@ export default function MyPageScreen() {
         text: "로그아웃",
         style: "destructive",
         onPress: async () => {
-          try {
-            await NotificationApi.deletePushToken();
-          } catch {
-            console.warn("푸시 토큰 해제 요청에 실패했습니다.");
+          if (Platform.OS === "android") {
+            try {
+              await NotificationApi.deletePushToken();
+            } catch {
+              console.warn("푸시 토큰 해제 요청에 실패했습니다.");
+            }
           }
 
           await logoutUser({ queryClient });
 
-          // 로그아웃 트래픽 기록
+          // [Analytics] 로그아웃 트래픽 기록
           await AnalyticsHelper.logEvent("logout", { method: "manual" });
           // 사용자 식별자 초기화
           await AnalyticsHelper.setUserId(null);

@@ -41,5 +41,5 @@ export interface UnreadCountResponse {
 
 export interface PushTokenRequest {
   token: string;
-  platform: "ANDROID" | "IOS";
+  platform: "ANDROID";
 }
