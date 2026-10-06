@@ -1,11 +1,13 @@
 import { Router } from "expo-router";
 import { Alert } from "react-native";
 
+import type { NotificationType } from "@/src/types/api/notification";
+
 export interface NotificationRoutePayload {
-  type: string;
-  relatedId?: string | number | null;
+  type: NotificationType | string;
+  sessionId?: string | number | null;
   title?: string;
-  message?: string;
+  body?: string;
 }
 
 export const parseString = (value: unknown): string | undefined =>
@@ -23,47 +25,51 @@ export const handleNotificationRouting = (
   payload: NotificationRoutePayload,
   router: Router,
 ) => {
-  const { type, title, message } = payload;
+  const { type, title, body, sessionId } = payload;
 
-  const relatedId = payload.relatedId ? String(payload.relatedId) : null;
+  const targetSessionId = sessionId ? String(sessionId) : null;
 
-  if (!relatedId && type !== "COMMENT" && type !== "INQUIRY") return;
+  if (!targetSessionId && type !== "ONE_ON_ONE_CHAT") return;
 
   switch (type) {
-    case "JOIN_REQUEST":
+    case "PARTICIPATION_REQUESTED":
       router.push({
         pathname: "/manage-participants",
-        params: { id: relatedId, title: title ?? "" },
+        params: { id: targetSessionId, title: title ?? "" },
       });
       break;
 
-    case "JOIN_ACCEPTED":
-    case "GROUP_CHAT":
-      router.push(`/chat/group/${relatedId}`);
+    case "PARTICIPATION_APPROVED":
+      router.push(`/chat/group/${targetSessionId}`);
       break;
 
-    case "JOIN_REJECTED":
-    case "CANCELED":
+    case "PARTICIPATION_REJECTED":
+    case "PARTICIPANT_KICKED":
+    case "SESSION_START_REMINDER":
       router.push({
         pathname: "/session-detail",
-        params: { id: relatedId },
+        params: { id: targetSessionId },
       });
+      break;
+
+    case "GROUP_CHAT":
+      router.push(`/chat/group/${targetSessionId}`);
       break;
 
     case "ONE_ON_ONE_CHAT":
-      router.push(`/chat/private/${relatedId}`);
+      router.push(`/chat/private/${targetSessionId}`);
       break;
 
     case "RUNNING_FINISHED":
-      router.push(`/host-rating?sessionId=${relatedId}`);
+      router.push(`/host-rating?sessionId=${targetSessionId}`);
       break;
 
     case "COMMENT":
-      // TODO [라우팅]: 게시글 상세 화면으로 이동
-      Alert.alert("알림", message);
+      Alert.alert("알림", body ?? "새로운 댓글이 달렸습니다.");
       break;
 
     default:
+      console.warn(`알 수 없는 알림 타입 라우팅 시도: ${type}`);
       break;
   }
 };
