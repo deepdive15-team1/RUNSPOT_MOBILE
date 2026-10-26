@@ -1,6 +1,7 @@
 import { axiosInstance } from "@/src/api/axiosInstance";
 import { getViewUrls } from "@/src/api/community/communityApi";
 import {
+  getCommunityImageKeysToResolve,
   mapCommunityImageFallbackUrls,
   resolveCommunityImageUri,
 } from "@/src/hooks/community/useCommunityImageUrls";
@@ -69,6 +70,21 @@ describe("커뮤니티 이미지 조회", () => {
       "posts/a.jpg": "https://api.example/a.jpg",
       "posts/b.jpg": "https://api.example/b.jpg",
     });
+  });
+
+  it("응답 URL이 유효하면 재발급을 생략하고 실패한 URL만 다시 발급한다", () => {
+    const fallbackUrls = {
+      "posts/a.jpg": "https://api.example/a.jpg",
+    };
+
+    expect(
+      getCommunityImageKeysToResolve(["posts/a.jpg"], fallbackUrls),
+    ).toEqual([]);
+    expect(
+      getCommunityImageKeysToResolve(["posts/a.jpg"], fallbackUrls, {
+        "https://api.example/a.jpg": true,
+      }),
+    ).toEqual(["posts/a.jpg"]);
   });
 });
 
