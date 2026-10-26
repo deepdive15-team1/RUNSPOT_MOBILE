@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { MOCK_GROUP_MESSAGES } from "@/src/api/chat/chatApi.mock";
+import { MOCK_GROUP_MESSAGES } from "@/src/api/chat/chatApi.index";
 import BackIcon from "@/src/assets/icon/back.svg";
 import MegaphoneIcon from "@/src/assets/icon/chat/megaphone.svg";
 import MenuIcon from "@/src/assets/icon/chat/menu.svg";

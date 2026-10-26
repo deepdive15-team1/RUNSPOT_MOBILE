@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { MOCK_CHAT_ROOMS } from "@/src/api/chat/chatApi.mock";
+import { MOCK_CHAT_ROOMS } from "@/src/api/chat/chatApi.index";
 import SearchIcon from "@/src/assets/icon/chat/search.svg";
 import CheckIcon from "@/src/assets/icon/manage-Participants/accept.svg";
 import SettingsIcon from "@/src/assets/icon/my-page/setting.svg";
