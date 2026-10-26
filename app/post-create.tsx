@@ -23,6 +23,8 @@ import { PostImageSection } from "@/src/components/community/post-create/PostIma
 import { PostTextFields } from "@/src/components/community/post-create/PostTextFields";
 import { styles } from "@/src/components/community/styles/PostCreate.styles";
 import LoadCourseModal from "@/src/components/create-session/LoadCourseModal";
+import { mapCommunityImageFallbackUrls } from "@/src/hooks/community/useCommunityImageUrls";
+import { useAuthStore } from "@/src/stores/useAuthStore";
 import {
   BoardType,
   PostDetailResponse,
@@ -57,6 +59,7 @@ const parseRoutePolyline = (value: string): RoutePoint[] => {
 export default function PostCreateScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.userId);
 
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const isEditMode = !!postId;
@@ -68,6 +71,9 @@ export default function PostCreateScreen() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [imageFallbackUrls, setImageFallbackUrls] = useState<
+    Record<string, string>
+  >({});
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<PastCourse | null>(null);
@@ -82,7 +88,7 @@ export default function PostCreateScreen() {
     isError: isEditDataError,
     refetch: refetchEditPost,
   } = useQuery({
-    queryKey: ["postDetail", numericPostId],
+    queryKey: ["postDetail", numericPostId, userId],
     queryFn: () => CommunityApi.getPostDetail(numericPostId),
     enabled: isEditMode && hasValidPostId,
   });
@@ -110,6 +116,12 @@ export default function PostCreateScreen() {
     setTitle(editPostData.title);
     setContent(editPostData.content);
     setImages(editPostData.imageKeys || []);
+    setImageFallbackUrls(
+      mapCommunityImageFallbackUrls(
+        editPostData.imageKeys ?? [],
+        editPostData.imageUrls,
+      ),
+    );
     setTags(editPostData.tags || []);
   }, [isEditMode, editPostData]);
 
@@ -179,7 +191,7 @@ export default function PostCreateScreen() {
 
   const createPostMutation = useMutation({
     mutationFn: CommunityApi.createPost,
-    onSuccess: (_data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
       // [Analytics] 게시글 작성 완료 트래픽 기록
       AnalyticsHelper.logEvent("post_created", {
@@ -317,7 +329,10 @@ export default function PostCreateScreen() {
     ) {
       return;
     }
-    if (isEditMode && (!hasValidPostId || !editPostData || isEditDataError)) {
+    if (
+      isEditMode &&
+      (!hasValidPostId || !editPostData?.mine || isEditDataError)
+    ) {
       return Alert.alert("오류", "게시글 정보를 확인한 뒤 다시 시도해주세요.");
     }
     if (!title.trim()) return Alert.alert("알림", "제목을 입력해주세요.");
@@ -390,6 +405,9 @@ export default function PostCreateScreen() {
     setTitle(draft.title);
     setContent(draft.content);
     setImages(draft.imageKeys || []);
+    setImageFallbackUrls(
+      mapCommunityImageFallbackUrls(draft.imageKeys ?? [], draft.imageUrls),
+    );
     setTags(draft.tags || []);
 
     if (draft.boardType === "COURSE" && draft.runningRecordId) {
@@ -420,12 +438,17 @@ export default function PostCreateScreen() {
     return <LoadingScreen message="게시글 정보를 불러오는 중..." />;
   }
 
-  if (isEditMode && (!hasValidPostId || isEditDataError || !editPostData)) {
+  if (
+    isEditMode &&
+    (!hasValidPostId || isEditDataError || !editPostData?.mine)
+  ) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <View style={styles.editErrorContainer}>
           <Text style={styles.editErrorText}>
-            게시글 정보를 불러오지 못했습니다.
+            {editPostData && !editPostData.mine
+              ? "수정 권한이 없는 게시글입니다."
+              : "게시글 정보를 불러오지 못했습니다."}
           </Text>
           <Button variant="primary" onPress={() => void refetchEditPost()}>
             다시 시도
@@ -461,7 +484,11 @@ export default function PostCreateScreen() {
         >
           {boardType === "GENERAL" ? (
             <>
-              <PostImageSection images={images} onChange={setImages} />
+              <PostImageSection
+                images={images}
+                fallbackUrls={imageFallbackUrls}
+                onChange={setImages}
+              />
               <PostTextFields {...textFieldProps} />
             </>
           ) : (
@@ -473,7 +500,11 @@ export default function PostCreateScreen() {
                 onOpenCoursePicker={() => setCourseModalVisible(true)}
                 onRemoveCourse={() => setSelectedCourse(null)}
               />
-              <PostImageSection images={images} onChange={setImages} />
+              <PostImageSection
+                images={images}
+                fallbackUrls={imageFallbackUrls}
+                onChange={setImages}
+              />
             </>
           )}
         </ScrollView>

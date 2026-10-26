@@ -1,6 +1,7 @@
 import {
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { AxiosError } from "axios";
@@ -28,6 +29,10 @@ import { LoadingScreen } from "@/src/components/common/loading/LoadingScreen";
 import { ReportModal } from "@/src/components/common/modal/ReportModal";
 import PostCard, { type FeedPost } from "@/src/components/community/PostCard";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import {
+  resolveCommunityImageUri,
+  useCommunityImageUrls,
+} from "@/src/hooks/community/useCommunityImageUrls";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 import { BoardType, PostSort } from "@/src/types/api/community";
 import { ReportReasonCode } from "@/src/types/api/report";
@@ -36,7 +41,7 @@ import { AnalyticsHelper } from "@/src/utils/analytics";
 export default function CommunityScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const user = useAuthStore((state) => state.user);
+  const userId = useAuthStore((state) => state.user?.userId);
 
   const [activeTab, setActiveTab] = useState<BoardType>("GENERAL");
   const [activeSort, setActiveSort] = useState<PostSort>("LATEST");
@@ -57,13 +62,29 @@ export default function CommunityScreen() {
           q: searchKeyword,
           cursor: pageParam ?? undefined,
         }),
-      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      getNextPageParam: (lastPage) =>
+        lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
     });
 
   const posts = useMemo(
     () => data?.pages.flatMap((page) => page.items) || [],
     [data],
   );
+  const { urls: thumbnailUrls } = useCommunityImageUrls(
+    posts
+      .map((post) => post.thumbnailKey)
+      .filter((key): key is string => !!key),
+  );
+  const {
+    data: menuPost,
+    isFetching: isMenuPostFetching,
+    isError: isMenuPostError,
+    refetch: refetchMenuPost,
+  } = useQuery({
+    queryKey: ["postDetail", selectedPost?.postId, userId],
+    queryFn: () => CommunityApi.getPostDetail(selectedPost!.postId),
+    enabled: isMenuVisible && !!selectedPost,
+  });
 
   const handleTabChange = useCallback((tab: BoardType) => {
     // [Analytics] 커뮤니티 탭 변경 트래픽 기록
@@ -167,14 +188,20 @@ export default function CommunityScreen() {
     ({ item }: { item: FeedPost }) => (
       <PostCard
         post={item}
+        userId={userId}
+        thumbnailUri={resolveCommunityImageUri(
+          item.thumbnailKey,
+          thumbnailUrls,
+          item.thumbnailUrl,
+        )}
         onPressMore={handlePressMore}
         onPressPost={handlePressPost}
       />
     ),
-    [handlePressMore, handlePressPost],
+    [handlePressMore, handlePressPost, thumbnailUrls, userId],
   );
 
-  const isMyPost = selectedPost?.authorName === user?.name;
+  const isMyPost = !isMenuPostFetching && menuPost?.mine === true;
 
   if (isLoading) return <LoadingScreen message="게시글을 불러오는 중..." />;
 
@@ -289,7 +316,19 @@ export default function CommunityScreen() {
           onPress={() => setMenuVisible(false)}
         >
           <View style={styles.menuContainer}>
-            {isMyPost ? (
+            {isMenuPostFetching ? (
+              <ActivityIndicator style={styles.menuItem} color={colors.main} />
+            ) : isMenuPostError ? (
+              <Button
+                variant="text"
+                fullWidth
+                textStyle={styles.menuText}
+                wrapperStyle={styles.menuItem}
+                onPress={() => void refetchMenuPost()}
+              >
+                다시 시도
+              </Button>
+            ) : isMyPost ? (
               <>
                 <Button
                   variant="text"

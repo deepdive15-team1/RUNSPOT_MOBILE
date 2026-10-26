@@ -15,10 +15,10 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Modal,
-  Dimensions,
   Share,
   ScrollView,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -40,12 +40,15 @@ import { ReportModal } from "@/src/components/common/modal/ReportModal";
 import CommentItem from "@/src/components/community/CommentItem";
 import { styles } from "@/src/components/community/styles/PostDetail.styles";
 import { colors, spacing } from "@/src/constants";
+import {
+  resolveCommunityImageUri,
+  useCommunityImageUrls,
+} from "@/src/hooks/community/useCommunityImageUrls";
 import { useToggleLike } from "@/src/hooks/community/useToggleLike";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 import { CommentResponse } from "@/src/types/api/community";
 import { AnalyticsHelper } from "@/src/utils/analytics";
-
-const SCREEN_WIDTH = Dimensions.get("window").width;
+import { getCommunityDetailImageHeight } from "@/src/utils/communityImageLayout";
 
 interface TreeComment extends CommentResponse {
   replies: TreeComment[];
@@ -55,8 +58,9 @@ export default function PostDetailScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { postId } = useLocalSearchParams<{ postId: string }>();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  const user = useAuthStore((state) => state.user);
+  const userId = useAuthStore((state) => state.user?.userId);
 
   const numericPostId = Number(postId);
 
@@ -73,16 +77,35 @@ export default function PostDetailScreen() {
     name: string;
   } | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageDimensions, setImageDimensions] = useState<
+    Record<number, { width: number; height: number }>
+  >({});
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  const getDetailImageHeight = useCallback(
+    (index: number) =>
+      getCommunityDetailImageHeight({
+        containerWidth: screenWidth,
+        viewportHeight: screenHeight,
+        imageWidth: imageDimensions[index]?.width,
+        imageHeight: imageDimensions[index]?.height,
+      }),
+    [imageDimensions, screenHeight, screenWidth],
+  );
+
+  const currentImageHeight = getDetailImageHeight(currentImageIndex);
 
   const {
     data: post,
     isLoading: isPostLoading,
     refetch: refetchPost,
   } = useQuery({
-    queryKey: ["postDetail", numericPostId],
+    queryKey: ["postDetail", numericPostId, userId],
     queryFn: () => CommunityApi.getPostDetail(Number(postId)),
   });
+  const { urls: imageUrls, isLoading: isImageLoading } = useCommunityImageUrls(
+    post?.imageKeys ?? [],
+  );
 
   const {
     data: commentsFlat,
@@ -186,7 +209,7 @@ export default function PostDetailScreen() {
     return tree;
   }, [commentsFlat]);
 
-  const isMyPost = !!post?.mine || post?.author?.name === user?.name;
+  const isMyPost = post?.mine === true;
 
   const handleEditPost = useCallback(() => {
     setMenuVisible(false);
@@ -288,9 +311,7 @@ export default function PostDetailScreen() {
     if (!post) return null;
     return (
       <SafeAreaView style={styles.headerContainer} edges={["top"]}>
-        {post.boardType === "GENERAL" &&
-        post.imageKeys &&
-        post.imageKeys.length > 0 ? (
+        {post.imageKeys && post.imageKeys.length > 0 && (
           <View>
             <FlatList
               data={post.imageKeys}
@@ -298,14 +319,68 @@ export default function PostDetailScreen() {
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               onScroll={handleScroll}
+              scrollEventThrottle={16}
+              extraData={imageDimensions}
+              style={{ height: currentImageHeight }}
               keyExtractor={(url) => url}
-              renderItem={({ item }) => (
-                <Image
-                  source={{ uri: item }}
-                  style={[styles.media, { width: SCREEN_WIDTH }]}
-                  resizeMode="cover"
-                />
-              )}
+              renderItem={({ item, index }) => {
+                const uri = resolveCommunityImageUri(
+                  item,
+                  imageUrls,
+                  post.imageUrls?.[index],
+                );
+                return uri ? (
+                  <Image
+                    source={{ uri }}
+                    style={[
+                      styles.media,
+                      {
+                        width: screenWidth,
+                        height: getDetailImageHeight(index),
+                      },
+                    ]}
+                    resizeMode="contain"
+                    onLoad={({ nativeEvent }) => {
+                      const sourceWidth = nativeEvent.source.width;
+                      const sourceHeight = nativeEvent.source.height;
+
+                      setImageDimensions((current) => {
+                        const previous = current[index];
+                        if (
+                          previous?.width === sourceWidth &&
+                          previous.height === sourceHeight
+                        ) {
+                          return current;
+                        }
+
+                        return {
+                          ...current,
+                          [index]: { width: sourceWidth, height: sourceHeight },
+                        };
+                      });
+                    }}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.media,
+                      {
+                        width: screenWidth,
+                        height: currentImageHeight,
+                        justifyContent: "center",
+                      },
+                    ]}
+                  >
+                    {isImageLoading ? (
+                      <ActivityIndicator color={colors.main} />
+                    ) : (
+                      <Text style={{ textAlign: "center" }}>
+                        사진을 불러오지 못했습니다.
+                      </Text>
+                    )}
+                  </View>
+                );
+              }}
             />
             {post.imageKeys.length > 1 && (
               <View style={styles.pageBadge}>
@@ -315,7 +390,8 @@ export default function PostDetailScreen() {
               </View>
             )}
           </View>
-        ) : post.boardType === "COURSE" && post._mockRouteData ? (
+        )}
+        {post.boardType === "COURSE" && post._mockRouteData && (
           <View>
             <View style={styles.mapContainer} pointerEvents="auto">
               <NaverMapComponent
@@ -346,7 +422,7 @@ export default function PostDetailScreen() {
               </View>
             </View>
           </View>
-        ) : null}
+        )}
 
         <View style={styles.postInfo}>
           <View style={styles.authorRow}>

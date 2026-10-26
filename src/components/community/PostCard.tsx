@@ -1,8 +1,10 @@
-import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, Image, Share } from "react-native";
 
 import { Button } from "../common/button/Button";
 
+import { CommunityApi } from "@/src/api/community/communityApi.index";
 import MenuIcon from "@/src/assets/icon/chat/menu.svg";
 import AavtarIcon from "@/src/assets/icon/common/avatar.svg";
 import CommentIcon from "@/src/assets/icon/community/comment.svg";
@@ -11,8 +13,13 @@ import ShareIcon from "@/src/assets/icon/community/share.svg";
 import LocationIcon from "@/src/assets/icon/session-detail/location.svg";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import {
+  resolveCommunityImageUri,
+  useCommunityImageUrls,
+} from "@/src/hooks/community/useCommunityImageUrls";
 import { PostSummaryResponse } from "@/src/types/api/community";
 import { AnalyticsHelper } from "@/src/utils/analytics";
+import { COMMUNITY_FEED_ASPECT_RATIO } from "@/src/utils/communityImageLayout";
 
 export type FeedPost = PostSummaryResponse & {
   _mockRouteData?: {
@@ -24,12 +31,39 @@ export type FeedPost = PostSummaryResponse & {
 
 interface PostCardProps {
   post: FeedPost;
+  userId?: number;
+  thumbnailUri?: string;
   onPressMore: (post: FeedPost) => void;
   onPressPost: (postId: string) => void;
 }
 
 const PostCard = React.memo(
-  ({ post, onPressMore, onPressPost }: PostCardProps) => {
+  ({ post, userId, thumbnailUri, onPressMore, onPressPost }: PostCardProps) => {
+    const [failedUris, setFailedUris] = useState<Record<string, boolean>>({});
+    const { data: fullPost } = useQuery({
+      queryKey: ["postDetail", post.postId, userId],
+      queryFn: () => CommunityApi.getPostDetail(post.postId),
+      enabled: !!post.thumbnailKey || !!post.thumbnailUrl,
+      staleTime: 60_000,
+    });
+    const fullImageKey = fullPost?.imageKeys?.[0];
+    const { urls: fullImageUrls } = useCommunityImageUrls(
+      fullImageKey ? [fullImageKey] : [],
+    );
+    const detailImageUri = resolveCommunityImageUri(
+      fullImageKey,
+      fullImageUrls,
+      fullPost?.imageUrls?.[0],
+      failedUris,
+    );
+    const resolvedThumbnailUri = resolveCommunityImageUri(
+      thumbnailUri,
+      {},
+      undefined,
+      failedUris,
+    );
+    const imageUri = detailImageUri ?? resolvedThumbnailUri;
+
     const handleShare = async () => {
       try {
         // [Analytics] 피드 카드 공유 클릭 트래픽 기록
@@ -70,14 +104,17 @@ const PostCard = React.memo(
           </Button>
         </View>
 
-        {post.boardType === "GENERAL" && post.thumbnailKey && (
+        {imageUri && (
           <Image
-            source={{ uri: post.thumbnailKey }}
+            source={{ uri: imageUri }}
             style={styles.media}
             resizeMode="cover"
+            onError={() => {
+              setFailedUris((current) => ({ ...current, [imageUri]: true }));
+            }}
           />
         )}
-        {post.boardType === "COURSE" && post._mockRouteData && (
+        {post.boardType === "COURSE" && post._mockRouteData && !imageUri && (
           <View style={styles.mapContainer} pointerEvents="none">
             <NaverMapComponent
               camera={{
@@ -200,7 +237,11 @@ const styles = StyleSheet.create({
   },
   authorNameBold: { fontWeight: fontWeights.bold },
   createdAt: { fontSize: fontSizes.xs, color: colors.gray500 },
-  media: { width: "100%", height: 300, backgroundColor: colors.gray100 },
+  media: {
+    width: "100%",
+    aspectRatio: COMMUNITY_FEED_ASPECT_RATIO,
+    backgroundColor: colors.gray100,
+  },
   mapContainer: { width: "100%", height: 250 },
   courseInfo: {
     flexDirection: "row",

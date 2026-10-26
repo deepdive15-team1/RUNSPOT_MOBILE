@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   headerContainer: { backgroundColor: colors.bg },
-  media: { aspectRatio: 1, backgroundColor: colors.gray100 },
+  media: { backgroundColor: colors.gray100 },
   mapContainer: { width: "100%", height: 350 },
   courseInfoBar: {
     flexDirection: "row",
