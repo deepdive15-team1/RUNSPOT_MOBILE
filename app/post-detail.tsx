@@ -1,4 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState, useCallback, useMemo } from "react";
@@ -22,8 +21,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { CommunityApi } from "@/src/api/community/communityApi.index";
-import { ReportApi } from "@/src/api/report/reportApi.index";
 import BackIcon from "@/src/assets/icon/back.svg";
 import AavtarIcon from "@/src/assets/icon/common/avatar.svg";
 import AllowSendIcon from "@/src/assets/icon/community/arrow-up.svg";
@@ -41,6 +38,16 @@ import CommentItem from "@/src/components/community/CommentItem";
 import { styles } from "@/src/components/community/styles/PostDetail.styles";
 import { colors, spacing } from "@/src/constants";
 import {
+  useComments,
+  useCreateComment,
+  useCreateReport,
+  useDeleteComment,
+  useDeletePost,
+  usePostDetail,
+  useToggleScrap,
+} from "@/src/hooks/community/useCommunity";
+import {
+  mapCommunityImageFallbackUrls,
   resolveCommunityImageUri,
   useCommunityImageUrls,
 } from "@/src/hooks/community/useCommunityImageUrls";
@@ -56,7 +63,6 @@ interface TreeComment extends CommentResponse {
 
 export default function PostDetailScreen() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
@@ -80,6 +86,9 @@ export default function PostDetailScreen() {
   const [imageDimensions, setImageDimensions] = useState<
     Record<number, { width: number; height: number }>
   >({});
+  const [failedImageUris, setFailedImageUris] = useState<
+    Record<string, boolean>
+  >({});
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const getDetailImageHeight = useCallback(
@@ -95,26 +104,27 @@ export default function PostDetailScreen() {
 
   const currentImageHeight = getDetailImageHeight(currentImageIndex);
 
-  const {
-    data: post,
-    isLoading: isPostLoading,
-    refetch: refetchPost,
-  } = useQuery({
-    queryKey: ["postDetail", numericPostId, userId],
-    queryFn: () => CommunityApi.getPostDetail(Number(postId)),
-  });
+  const { data: post, isLoading: isPostLoading } = usePostDetail(
+    numericPostId,
+    userId,
+  );
+  const imageFallbackUrls = useMemo(
+    () => mapCommunityImageFallbackUrls(post?.imageKeys ?? [], post?.imageUrls),
+    [post?.imageKeys, post?.imageUrls],
+  );
   const { urls: imageUrls, isLoading: isImageLoading } = useCommunityImageUrls(
     post?.imageKeys ?? [],
+    imageFallbackUrls,
+    failedImageUris,
   );
 
-  const {
-    data: commentsFlat,
-    isLoading: isCommentLoading,
-    refetch: refetchComments,
-  } = useQuery<CommentResponse[]>({
-    queryKey: ["comments", numericPostId],
-    queryFn: () => CommunityApi.getComments(Number(postId)),
-  });
+  const { data: commentsFlat, isLoading: isCommentLoading } =
+    useComments(numericPostId);
+  const { mutateAsync: deletePost } = useDeletePost();
+  const { mutateAsync: deleteComment } = useDeleteComment();
+  const { mutateAsync: createComment } = useCreateComment();
+  const { mutateAsync: createReport } = useCreateReport();
+  const toggleScrapMutation = useToggleScrap();
 
   const handleDeletePost = useCallback(() => {
     setMenuVisible(false);
@@ -125,12 +135,10 @@ export default function PostDetailScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await CommunityApi.deletePost(numericPostId);
+            await deletePost(numericPostId);
 
             // [Analytics] 게시글 삭제 트래픽 기록
             AnalyticsHelper.logEvent("post_deleted", { postId: numericPostId });
-            queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
-
             Alert.alert("알림", "게시글이 삭제되었습니다.", [
               { text: "확인", onPress: () => router.back() },
             ]);
@@ -140,30 +148,7 @@ export default function PostDetailScreen() {
         },
       },
     ]);
-  }, [numericPostId, router, queryClient]);
-
-  const toggleScrapMutation = useMutation({
-    mutationFn: async () => {
-      if (post?.scrapped) {
-        await CommunityApi.cancelScrapPost(numericPostId);
-      } else {
-        await CommunityApi.scrapPost(numericPostId);
-      }
-    },
-    onSuccess: () => {
-      refetchPost();
-      queryClient.invalidateQueries({ queryKey: ["myScraps"] });
-      Alert.alert(
-        "알림",
-        post?.scrapped
-          ? "관심 게시물에서 해제되었습니다."
-          : "관심 게시물로 저장되었습니다.",
-      );
-    },
-    onError: () => {
-      Alert.alert("오류", "관심 게시물 설정 중 문제가 발생했습니다.");
-    },
-  });
+  }, [deletePost, numericPostId, router]);
 
   const handleDeleteComment = useCallback(
     (commentId: number) => {
@@ -174,9 +159,8 @@ export default function PostDetailScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await CommunityApi.deleteComment(commentId);
+              await deleteComment({ postId: numericPostId, commentId });
               AnalyticsHelper.logEvent("comment_deleted", { commentId });
-              refetchComments();
             } catch {
               Alert.alert("오류", "댓글 삭제에 실패했습니다.");
             }
@@ -184,7 +168,7 @@ export default function PostDetailScreen() {
         },
       ]);
     },
-    [refetchComments],
+    [deleteComment, numericPostId],
   );
 
   const commentTree = useMemo<TreeComment[]>(() => {
@@ -236,9 +220,12 @@ export default function PostDetailScreen() {
     const parentId = replyTarget ? Number(replyTarget.id) : undefined;
 
     try {
-      await CommunityApi.createComment(Number(postId), {
-        parentId,
-        content: commentText.trim(),
+      await createComment({
+        postId: numericPostId,
+        data: {
+          parentId,
+          content: commentText.trim(),
+        },
       });
 
       // [Analytics] 댓글/대댓글 작성 트래픽 기록
@@ -249,8 +236,6 @@ export default function PostDetailScreen() {
 
       setCommentText("");
       setReplyTarget(null);
-      refetchComments();
-      refetchPost();
     } catch {
       Alert.alert("오류", "댓글 작성에 실패했습니다.");
     } finally {
@@ -258,11 +243,11 @@ export default function PostDetailScreen() {
     }
   }, [
     commentText,
+    createComment,
+    numericPostId,
     postId,
     replyTarget,
     isSubmittingComment,
-    refetchComments,
-    refetchPost,
   ]);
 
   const handleShare = useCallback(async () => {
@@ -328,6 +313,7 @@ export default function PostDetailScreen() {
                   item,
                   imageUrls,
                   post.imageUrls?.[index],
+                  failedImageUris,
                 );
                 return uri ? (
                   <Image
@@ -359,6 +345,12 @@ export default function PostDetailScreen() {
                         };
                       });
                     }}
+                    onError={() =>
+                      setFailedImageUris((current) => ({
+                        ...current,
+                        [uri]: true,
+                      }))
+                    }
                   />
                 ) : (
                   <View
@@ -669,7 +661,24 @@ export default function PostDetailScreen() {
                   wrapperStyle={styles.menuItem}
                   onPress={() => {
                     setMenuVisible(false);
-                    toggleScrapMutation.mutate();
+                    const scrapped = post?.scrapped ?? false;
+                    toggleScrapMutation.mutate(
+                      { postId: numericPostId, scrapped },
+                      {
+                        onSuccess: () =>
+                          Alert.alert(
+                            "알림",
+                            scrapped
+                              ? "관심 게시물에서 해제되었습니다."
+                              : "관심 게시물로 저장되었습니다.",
+                          ),
+                        onError: () =>
+                          Alert.alert(
+                            "오류",
+                            "관심 게시물 설정 중 문제가 발생했습니다.",
+                          ),
+                      },
+                    );
                   }}
                 >
                   {post?.scrapped ? "관심 게시물 해제" : "관심 게시물로 저장"}
@@ -686,7 +695,7 @@ export default function PostDetailScreen() {
         onClose={() => setReportVisible(false)}
         onSubmit={async (reasonCode, detail) => {
           try {
-            await ReportApi.createReport({
+            await createReport({
               targetId: numericPostId,
               targetType: "POST",
               reasonCode,

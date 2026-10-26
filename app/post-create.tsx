@@ -23,6 +23,7 @@ import { PostImageSection } from "@/src/components/community/post-create/PostIma
 import { PostTextFields } from "@/src/components/community/post-create/PostTextFields";
 import { styles } from "@/src/components/community/styles/PostCreate.styles";
 import LoadCourseModal from "@/src/components/create-session/LoadCourseModal";
+import { communityKeys, runningRecordKeys } from "@/src/constants/queryKeys";
 import { mapCommunityImageFallbackUrls } from "@/src/hooks/community/useCommunityImageUrls";
 import { useAuthStore } from "@/src/stores/useAuthStore";
 import {
@@ -88,14 +89,14 @@ export default function PostCreateScreen() {
     isError: isEditDataError,
     refetch: refetchEditPost,
   } = useQuery({
-    queryKey: ["postDetail", numericPostId, userId],
+    queryKey: communityKeys.postDetailForUser(numericPostId, userId),
     queryFn: () => CommunityApi.getPostDetail(numericPostId),
     enabled: isEditMode && hasValidPostId,
   });
 
   const { data: runningRecords, isLoading: isRunningRecordsLoading } = useQuery(
     {
-      queryKey: ["myRunningRecords"],
+      queryKey: runningRecordKeys.mine(),
       queryFn: RunningRecordApi.getMyRunningRecords,
       enabled:
         isEditMode &&
@@ -165,7 +166,7 @@ export default function PostCreateScreen() {
   }, [isEditMode, editPostData, isRunningRecordsLoading, linkedRunningRecord]);
 
   const { data: draftPosts } = useQuery({
-    queryKey: ["draftPosts"],
+    queryKey: communityKeys.drafts(),
     queryFn: CommunityApi.getDraftPosts,
   });
 
@@ -192,7 +193,7 @@ export default function PostCreateScreen() {
   const createPostMutation = useMutation({
     mutationFn: CommunityApi.createPost,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
+      queryClient.invalidateQueries({ queryKey: communityKeys.posts() });
       // [Analytics] 게시글 작성 완료 트래픽 기록
       AnalyticsHelper.logEvent("post_created", {
         boardType,
@@ -220,9 +221,9 @@ export default function PostCreateScreen() {
         { text: "확인", onPress: () => router.back() },
       ]);
       queryClient.invalidateQueries({
-        queryKey: ["postDetail", Number(postId)],
+        queryKey: communityKeys.postDetail(Number(postId)),
       });
-      queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
+      queryClient.invalidateQueries({ queryKey: communityKeys.posts() });
     },
     onError: () => {
       Alert.alert("오류", "게시글 수정에 실패했습니다.");
@@ -235,7 +236,7 @@ export default function PostCreateScreen() {
       // [Analytics] 게시글 임시저장 트래픽 기록
       AnalyticsHelper.logEvent("post_draft_saved", { boardType });
 
-      queryClient.invalidateQueries({ queryKey: ["draftPosts"] });
+      queryClient.invalidateQueries({ queryKey: communityKeys.drafts() });
 
       setTitle("");
       setContent("");

@@ -1,10 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, Image, Share } from "react-native";
 
 import { Button } from "../common/button/Button";
 
-import { CommunityApi } from "@/src/api/community/communityApi.index";
 import MenuIcon from "@/src/assets/icon/chat/menu.svg";
 import AavtarIcon from "@/src/assets/icon/common/avatar.svg";
 import CommentIcon from "@/src/assets/icon/community/comment.svg";
@@ -13,7 +11,9 @@ import ShareIcon from "@/src/assets/icon/community/share.svg";
 import LocationIcon from "@/src/assets/icon/session-detail/location.svg";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { usePostDetail } from "@/src/hooks/community/useCommunity";
 import {
+  mapCommunityImageFallbackUrls,
   resolveCommunityImageUri,
   useCommunityImageUrls,
 } from "@/src/hooks/community/useCommunityImageUrls";
@@ -40,15 +40,21 @@ interface PostCardProps {
 const PostCard = React.memo(
   ({ post, userId, thumbnailUri, onPressMore, onPressPost }: PostCardProps) => {
     const [failedUris, setFailedUris] = useState<Record<string, boolean>>({});
-    const { data: fullPost } = useQuery({
-      queryKey: ["postDetail", post.postId, userId],
-      queryFn: () => CommunityApi.getPostDetail(post.postId),
-      enabled: !!post.thumbnailKey || !!post.thumbnailUrl,
-      staleTime: 60_000,
-    });
+    const { data: fullPost } = usePostDetail(
+      post.postId,
+      userId,
+      !!post.thumbnailKey || !!post.thumbnailUrl,
+      60_000,
+    );
     const fullImageKey = fullPost?.imageKeys?.[0];
+    const fullImageFallbackUrls = mapCommunityImageFallbackUrls(
+      fullPost?.imageKeys ?? [],
+      fullPost?.imageUrls,
+    );
     const { urls: fullImageUrls } = useCommunityImageUrls(
       fullImageKey ? [fullImageKey] : [],
+      fullImageFallbackUrls,
+      failedUris,
     );
     const detailImageUri = resolveCommunityImageUri(
       fullImageKey,

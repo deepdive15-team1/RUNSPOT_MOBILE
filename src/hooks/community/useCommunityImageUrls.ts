@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 
 import { CommunityApi } from "@/src/api/community/communityApi.index";
+import { communityKeys } from "@/src/constants/queryKeys";
 
 const VIEW_URL_STALE_TIME = 55 * 60 * 1000;
 
@@ -19,9 +20,31 @@ export function mapCommunityImageFallbackUrls(
   return urls;
 }
 
-export function useCommunityImageUrls(keys: string[]) {
-  const imageKeys = Array.from(
-    new Set(keys.filter((key) => key && !isDirectImageUri(key))),
+export function getCommunityImageKeysToResolve(
+  keys: string[],
+  fallbackUrls: Record<string, string> = {},
+  failedUris: Record<string, boolean> = {},
+): string[] {
+  return Array.from(
+    new Set(
+      keys.filter((key) => {
+        if (!key || isDirectImageUri(key)) return false;
+        const fallbackUrl = fallbackUrls[key];
+        return !fallbackUrl || !!failedUris[fallbackUrl];
+      }),
+    ),
+  );
+}
+
+export function useCommunityImageUrls(
+  keys: string[],
+  fallbackUrls: Record<string, string> = {},
+  failedUris: Record<string, boolean> = {},
+) {
+  const imageKeys = getCommunityImageKeysToResolve(
+    keys,
+    fallbackUrls,
+    failedUris,
   );
   const batches: string[][] = [];
   for (let index = 0; index < imageKeys.length; index += 50) {
@@ -30,13 +53,16 @@ export function useCommunityImageUrls(keys: string[]) {
 
   const queries = useQueries({
     queries: batches.map((batch) => ({
-      queryKey: ["communityViewUrls", batch],
+      queryKey: communityKeys.viewUrls(batch),
       queryFn: () => CommunityApi.getViewUrls(batch),
       staleTime: VIEW_URL_STALE_TIME,
     })),
   });
 
   const urls: Record<string, string> = {};
+  Object.entries(fallbackUrls).forEach(([imageKey, url]) => {
+    if (!failedUris[url]) urls[imageKey] = url;
+  });
   queries.forEach((query) => {
     query.data?.items.forEach(({ imageKey, uploadUrl }) => {
       urls[imageKey] = uploadUrl;

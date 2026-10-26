@@ -16,6 +16,7 @@ import { RunningRecordApi } from "@/src/api/runningCourse/runningRecordsApi.inde
 import BackIcon from "@/src/assets/icon/back.svg";
 import { Button } from "@/src/components/common/button/Button";
 import { colors, spacing, fontSizes, borderRadius } from "@/src/constants";
+import { runningRecordKeys } from "@/src/constants/queryKeys";
 import { RunningRecordResponse } from "@/src/types/api/runningCourse";
 import { PastCourse } from "@/src/types/domain/course";
 import { paceStringToSeconds } from "@/src/utils";
@@ -71,7 +72,7 @@ export default function LoadCourseModal({
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const { data: runningRecords, isLoading } = useQuery({
-    queryKey: ["myRunningRecords"],
+    queryKey: runningRecordKeys.mine(),
     queryFn: RunningRecordApi.getMyRunningRecords,
     enabled: visible,
   });

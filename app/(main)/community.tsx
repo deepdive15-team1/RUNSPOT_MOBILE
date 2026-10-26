@@ -1,9 +1,3 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 import { useState, useCallback, useMemo } from "react";
@@ -18,8 +12,6 @@ import {
   Alert,
 } from "react-native";
 
-import { CommunityApi } from "@/src/api/community/communityApi.index";
-import { ReportApi } from "@/src/api/report/reportApi.index";
 import EditIcon from "@/src/assets/icon/community/edit.svg";
 import SearchIcon from "@/src/assets/icon/search.svg";
 import { Input } from "@/src/components/common/Input/Input";
@@ -29,6 +21,13 @@ import { LoadingScreen } from "@/src/components/common/loading/LoadingScreen";
 import { ReportModal } from "@/src/components/common/modal/ReportModal";
 import PostCard, { type FeedPost } from "@/src/components/community/PostCard";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import {
+  useCreateReport,
+  useDeletePost,
+  usePostDetail,
+  usePosts,
+  useToggleScrap,
+} from "@/src/hooks/community/useCommunity";
 import {
   resolveCommunityImageUri,
   useCommunityImageUrls,
@@ -40,7 +39,6 @@ import { AnalyticsHelper } from "@/src/utils/analytics";
 
 export default function CommunityScreen() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.userId);
 
   const [activeTab, setActiveTab] = useState<BoardType>("GENERAL");
@@ -52,18 +50,10 @@ export default function CommunityScreen() {
   const [isReportVisible, setReportVisible] = useState(false);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useInfiniteQuery({
-      queryKey: ["communityPosts", activeTab, activeSort, searchKeyword],
-      initialPageParam: null as string | null,
-      queryFn: ({ pageParam }) =>
-        CommunityApi.getPosts({
-          boardType: activeTab,
-          sort: activeSort,
-          q: searchKeyword,
-          cursor: pageParam ?? undefined,
-        }),
-      getNextPageParam: (lastPage) =>
-        lastPage.hasNext ? (lastPage.nextCursor ?? undefined) : undefined,
+    usePosts({
+      boardType: activeTab,
+      sort: activeSort,
+      query: searchKeyword,
     });
 
   const posts = useMemo(
@@ -80,11 +70,14 @@ export default function CommunityScreen() {
     isFetching: isMenuPostFetching,
     isError: isMenuPostError,
     refetch: refetchMenuPost,
-  } = useQuery({
-    queryKey: ["postDetail", selectedPost?.postId, userId],
-    queryFn: () => CommunityApi.getPostDetail(selectedPost!.postId),
-    enabled: isMenuVisible && !!selectedPost,
-  });
+  } = usePostDetail(
+    selectedPost?.postId,
+    userId,
+    isMenuVisible && !!selectedPost,
+  );
+  const { mutateAsync: createReport } = useCreateReport();
+  const { mutateAsync: deletePost } = useDeletePost();
+  const toggleScrapMutation = useToggleScrap();
 
   const handleTabChange = useCallback((tab: BoardType) => {
     // [Analytics] 커뮤니티 탭 변경 트래픽 기록
@@ -102,7 +95,7 @@ export default function CommunityScreen() {
       if (!selectedPost) return;
 
       try {
-        await ReportApi.createReport({
+        await createReport({
           targetType: "POST",
           targetId: selectedPost.postId,
           reasonCode: reasonCode,
@@ -131,22 +124,8 @@ export default function CommunityScreen() {
         setReportVisible(false);
       }
     },
-    [selectedPost],
+    [createReport, selectedPost],
   );
-
-  const toggleScrapMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedPost) return;
-      await CommunityApi.scrapPost(selectedPost.postId);
-    },
-    onSuccess: () => {
-      Alert.alert("알림", "관심 게시물로 저장되었습니다.");
-      queryClient.invalidateQueries({ queryKey: ["myScraps"] });
-    },
-    onError: () => {
-      Alert.alert("오류", "관심 게시물 설정 중 문제가 발생했습니다.");
-    },
-  });
 
   const handleDeletePost = useCallback(() => {
     if (!selectedPost) return;
@@ -159,13 +138,11 @@ export default function CommunityScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await CommunityApi.deletePost(selectedPost.postId);
+            await deletePost(selectedPost.postId);
 
             AnalyticsHelper.logEvent("post_deleted", {
               postId: selectedPost.postId,
             });
-            queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
-
             Alert.alert("알림", "게시글이 삭제되었습니다.");
           } catch {
             Alert.alert("오류", "게시글 삭제에 실패했습니다.");
@@ -173,7 +150,7 @@ export default function CommunityScreen() {
         },
       },
     ]);
-  }, [selectedPost, queryClient]);
+  }, [deletePost, selectedPost]);
 
   const handlePressPost = useCallback(
     (id: string) => {
@@ -388,11 +365,31 @@ export default function CommunityScreen() {
                   textStyle={styles.menuText}
                   wrapperStyle={styles.menuItem}
                   onPress={() => {
+                    if (!selectedPost) return;
                     setMenuVisible(false);
-                    toggleScrapMutation.mutate();
+                    const scrapped = menuPost?.scrapped ?? false;
+                    toggleScrapMutation.mutate(
+                      { postId: selectedPost.postId, scrapped },
+                      {
+                        onSuccess: () =>
+                          Alert.alert(
+                            "알림",
+                            scrapped
+                              ? "관심 게시물에서 해제되었습니다."
+                              : "관심 게시물로 저장되었습니다.",
+                          ),
+                        onError: () =>
+                          Alert.alert(
+                            "오류",
+                            "관심 게시물 설정 중 문제가 발생했습니다.",
+                          ),
+                      },
+                    );
                   }}
                 >
-                  관심 게시물로 저장
+                  {menuPost?.scrapped
+                    ? "관심 게시물에서 해제"
+                    : "관심 게시물로 저장"}
                 </Button>
               </>
             )}

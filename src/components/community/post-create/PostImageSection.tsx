@@ -26,8 +26,8 @@ export function PostImageSection({
   fallbackUrls,
   onChange,
 }: PostImageSectionProps) {
-  const { urls } = useCommunityImageUrls(images);
   const [failedUris, setFailedUris] = useState<Record<string, boolean>>({});
+  const { urls } = useCommunityImageUrls(images, fallbackUrls, failedUris);
   const handleAddImage = useCallback(async () => {
     if (images.length >= 3) {
       Alert.alert("알림", "사진은 최대 3장까지 첨부 가능합니다.");
