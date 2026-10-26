@@ -10,6 +10,7 @@ import {
   PostUpsertRequest,
   PresignedUrlRequest,
   PresignedUrlResponse,
+  ViewUrlsResponse,
 } from "@/src/types/api/community";
 
 // 임시저장
@@ -129,6 +130,24 @@ export const getPresignedUrls = async (
   const response = await axiosInstance.post<PresignedUrlResponse>(
     "/api/v1/files/presigned-urls",
     payload,
+  );
+  return response.data;
+};
+
+export const getViewUrls = async (
+  keys: string[],
+): Promise<ViewUrlsResponse> => {
+  if (keys.length < 1 || keys.length > 50) {
+    throw new Error("이미지 조회 키는 1개 이상 50개 이하여야 합니다.");
+  }
+
+  const response = await axiosInstance.get<ViewUrlsResponse>(
+    "/api/v1/files/view-urls",
+    {
+      params: { keys },
+      paramsSerializer: () =>
+        keys.map((key) => `keys=${encodeURIComponent(key)}`).join("&"),
+    },
   );
   return response.data;
 };

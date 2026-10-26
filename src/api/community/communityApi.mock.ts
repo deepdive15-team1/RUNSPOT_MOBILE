@@ -10,6 +10,7 @@ import {
   PostUpsertRequest,
   PresignedUrlRequest,
   PresignedUrlResponse,
+  ViewUrlsResponse,
 } from "@/src/types/api/community";
 
 // 임시저장
@@ -281,6 +282,18 @@ export const getPresignedUrls = async (
     })),
   };
 };
+
+export const getViewUrls = async (
+  keys: string[],
+): Promise<ViewUrlsResponse> => ({
+  items: keys.map((imageKey) => ({
+    imageKey,
+    uploadUrl: imageKey.startsWith("http")
+      ? imageKey
+      : "https://picsum.photos/400/300",
+    expiresIn: 3600,
+  })),
+});
 
 export const uploadFileToS3 = async (
   uploadUrl: string,

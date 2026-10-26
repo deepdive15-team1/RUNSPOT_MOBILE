@@ -16,6 +16,7 @@ export interface PostSummaryResponse {
   content: string;
   authorName: string;
   thumbnailKey: string | null;
+  thumbnailUrl?: string | null;
   likeCount: number;
   commentCount: number;
   viewCount: number;
@@ -36,6 +37,7 @@ export interface PostDetailResponse {
   content: string;
   author: AuthorResponse;
   imageKeys: string[];
+  imageUrls?: string[];
   tags: string[];
   runningRecordId: number | null;
   likeCount: number;
@@ -108,6 +110,14 @@ export interface PresignedUrlRequest {
 }
 
 export interface PresignedUrlResponse {
+  items: {
+    imageKey: string;
+    uploadUrl: string;
+    expiresIn: number;
+  }[];
+}
+
+export interface ViewUrlsResponse {
   items: {
     imageKey: string;
     uploadUrl: string;

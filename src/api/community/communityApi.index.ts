@@ -31,5 +31,6 @@ export const CommunityApi = {
   getPresignedUrls: isMock
     ? mockAPI.getPresignedUrls
     : realAPI.getPresignedUrls,
+  getViewUrls: isMock ? mockAPI.getViewUrls : realAPI.getViewUrls,
   uploadFileToS3: isMock ? mockAPI.uploadFileToS3 : realAPI.uploadFileToS3,
 };
