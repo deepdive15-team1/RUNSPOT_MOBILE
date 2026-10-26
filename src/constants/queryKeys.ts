@@ -1,3 +1,4 @@
+import type { BoardType, PostSort } from "../types/api/community";
 import { GetMarkersParams } from "../types/api/search";
 
 export const sessionKeys = {
@@ -50,4 +51,27 @@ export const notificationKeys = {
   list: (unreadOnly = false) =>
     [...notificationKeys.lists(), { unreadOnly }] as const,
   unreadCount: () => [...notificationKeys.all, "unreadCount"] as const,
+};
+
+export const communityKeys = {
+  all: ["community"] as const,
+  posts: () => [...communityKeys.all, "posts"] as const,
+  postList: (boardType: BoardType, sort: PostSort, query: string) =>
+    [...communityKeys.posts(), boardType, sort, query] as const,
+  postDetails: () => [...communityKeys.all, "postDetail"] as const,
+  postDetail: (postId: number) =>
+    [...communityKeys.postDetails(), postId] as const,
+  postDetailForUser: (postId: number, userId?: number) =>
+    [...communityKeys.postDetail(postId), userId ?? "guest"] as const,
+  comments: (postId: number) =>
+    [...communityKeys.all, "comments", postId] as const,
+  scraps: () => [...communityKeys.all, "scraps"] as const,
+  drafts: () => [...communityKeys.all, "drafts"] as const,
+  viewUrls: (keys: string[]) =>
+    [...communityKeys.all, "viewUrls", ...keys] as const,
+};
+
+export const runningRecordKeys = {
+  all: ["runningRecords"] as const,
+  mine: () => [...runningRecordKeys.all, "mine"] as const,
 };

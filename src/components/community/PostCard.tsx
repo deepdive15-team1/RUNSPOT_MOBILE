@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, Image, Share } from "react-native";
 
 import { Button } from "../common/button/Button";
@@ -11,8 +11,15 @@ import ShareIcon from "@/src/assets/icon/community/share.svg";
 import LocationIcon from "@/src/assets/icon/session-detail/location.svg";
 import { NaverMapComponent } from "@/src/components/common/map/NaverMapComponent";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { usePostDetail } from "@/src/hooks/community/useCommunity";
+import {
+  mapCommunityImageFallbackUrls,
+  resolveCommunityImageUri,
+  useCommunityImageUrls,
+} from "@/src/hooks/community/useCommunityImageUrls";
 import { PostSummaryResponse } from "@/src/types/api/community";
 import { AnalyticsHelper } from "@/src/utils/analytics";
+import { COMMUNITY_FEED_ASPECT_RATIO } from "@/src/utils/communityImageLayout";
 
 export type FeedPost = PostSummaryResponse & {
   _mockRouteData?: {
@@ -24,12 +31,45 @@ export type FeedPost = PostSummaryResponse & {
 
 interface PostCardProps {
   post: FeedPost;
+  userId?: number;
+  thumbnailUri?: string;
   onPressMore: (post: FeedPost) => void;
   onPressPost: (postId: string) => void;
 }
 
 const PostCard = React.memo(
-  ({ post, onPressMore, onPressPost }: PostCardProps) => {
+  ({ post, userId, thumbnailUri, onPressMore, onPressPost }: PostCardProps) => {
+    const [failedUris, setFailedUris] = useState<Record<string, boolean>>({});
+    const { data: fullPost } = usePostDetail(
+      post.postId,
+      userId,
+      !!post.thumbnailKey || !!post.thumbnailUrl,
+      60_000,
+    );
+    const fullImageKey = fullPost?.imageKeys?.[0];
+    const fullImageFallbackUrls = mapCommunityImageFallbackUrls(
+      fullPost?.imageKeys ?? [],
+      fullPost?.imageUrls,
+    );
+    const { urls: fullImageUrls } = useCommunityImageUrls(
+      fullImageKey ? [fullImageKey] : [],
+      fullImageFallbackUrls,
+      failedUris,
+    );
+    const detailImageUri = resolveCommunityImageUri(
+      fullImageKey,
+      fullImageUrls,
+      fullPost?.imageUrls?.[0],
+      failedUris,
+    );
+    const resolvedThumbnailUri = resolveCommunityImageUri(
+      thumbnailUri,
+      {},
+      undefined,
+      failedUris,
+    );
+    const imageUri = detailImageUri ?? resolvedThumbnailUri;
+
     const handleShare = async () => {
       try {
         // [Analytics] 피드 카드 공유 클릭 트래픽 기록
@@ -38,7 +78,7 @@ const PostCard = React.memo(
           process.env.EXPO_PUBLIC_SHARE_URL ||
           "https://landing-lilac-zeta.vercel.app";
         await Share.share({
-          message: `[RunSpot] ${post.author.name} 님의 게시글\n ${shareUrl}`,
+          message: `[RunSpot] ${post?.authorName || "알 수 없음"} 님의 게시글\n ${shareUrl}`,
         });
       } catch (error) {
         console.error("공유하기 에러:", error);
@@ -53,7 +93,9 @@ const PostCard = React.memo(
         <View style={styles.header}>
           <View style={styles.authorInfo}>
             <AavtarIcon color={colors.gray400} style={styles.avatar} />
-            <Text style={styles.authorName}>{post.author.name}</Text>
+            <Text style={styles.authorName}>
+              {post?.authorName || "알 수 없음"}
+            </Text>
             <Text style={styles.createdAt}>
               {new Date(post.createdAt).toLocaleDateString()}
             </Text>
@@ -68,14 +110,17 @@ const PostCard = React.memo(
           </Button>
         </View>
 
-        {post.boardType === "GENERAL" && post.imageKeys?.length > 0 && (
+        {imageUri && (
           <Image
-            source={{ uri: post.imageKeys[0] }}
+            source={{ uri: imageUri }}
             style={styles.media}
             resizeMode="cover"
+            onError={() => {
+              setFailedUris((current) => ({ ...current, [imageUri]: true }));
+            }}
           />
         )}
-        {post.boardType === "COURSE" && post._mockRouteData && (
+        {post.boardType === "COURSE" && post._mockRouteData && !imageUri && (
           <View style={styles.mapContainer} pointerEvents="none">
             <NaverMapComponent
               camera={{
@@ -107,7 +152,12 @@ const PostCard = React.memo(
               variant="text"
               size="sm"
               startIcon={
-                <HeartIcon width={24} height={24} color={colors.black} />
+                <HeartIcon
+                  width={24}
+                  height={24}
+                  color={post.liked ? colors.red : colors.black}
+                  fill={post.liked ? colors.red : "none"}
+                />
               }
               textStyle={styles.actionText}
               wrapperStyle={styles.actionButtonZeroPad}
@@ -140,10 +190,11 @@ const PostCard = React.memo(
         <View style={styles.contentContainer}>
           <Text style={styles.likes}>좋아요 {post.likeCount}개</Text>
           <Text style={styles.content} numberOfLines={2}>
-            <Text style={styles.authorNameBold}>{post.author.name} </Text>
+            <Text style={styles.authorNameBold}>
+              {post?.authorName || "알 수 없음"}
+            </Text>
             {post.content}
           </Text>
-          <Text style={styles.hashtags}>{post.tags.join(" ")}</Text>
 
           <Button
             variant="text"
@@ -192,7 +243,11 @@ const styles = StyleSheet.create({
   },
   authorNameBold: { fontWeight: fontWeights.bold },
   createdAt: { fontSize: fontSizes.xs, color: colors.gray500 },
-  media: { width: "100%", height: 300, backgroundColor: colors.gray100 },
+  media: {
+    width: "100%",
+    aspectRatio: COMMUNITY_FEED_ASPECT_RATIO,
+    backgroundColor: colors.gray100,
+  },
   mapContainer: { width: "100%", height: 250 },
   courseInfo: {
     flexDirection: "row",

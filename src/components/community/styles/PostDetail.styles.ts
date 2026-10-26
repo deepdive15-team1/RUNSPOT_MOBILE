@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   headerContainer: { backgroundColor: colors.bg },
-  media: { aspectRatio: 1, backgroundColor: colors.gray100 },
+  media: { backgroundColor: colors.gray100 },
   mapContainer: { width: "100%", height: 350 },
   courseInfoBar: {
     flexDirection: "row",
@@ -191,9 +191,13 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
   },
   menuItem: {
-    paddingVertical: spacing.lg,
+    paddingVertical: 17,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray100,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 56,
   },
   menuText: {
     fontSize: fontSizes.base,

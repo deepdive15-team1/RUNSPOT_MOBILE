@@ -13,19 +13,21 @@ import {
 
 import { Button } from "@/src/components/common/button/Button";
 import { colors, fontSizes, fontWeights, spacing } from "@/src/constants";
+import { ReportReasonCode } from "@/src/types/api/report";
 
 interface ReportModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (reason: string, details: string) => void;
+  onSubmit: (reasonCode: ReportReasonCode, detail: string) => void;
   targetName?: string;
 }
 
-const REPORT_REASONS = [
-  "스팸 및 홍보성 내용",
-  "욕설 및 불쾌한 표현",
-  "음란물 및 부적절한 콘텐츠",
-  "기타 (직접 입력)",
+const REPORT_REASONS: { label: string; code: ReportReasonCode }[] = [
+  { label: "스팸 및 홍보성 내용", code: "SPAM" },
+  { label: "욕설 및 불쾌한 표현", code: "ABUSE" },
+  { label: "음란물 및 부적절한 콘텐츠", code: "SEXUAL" },
+  { label: "사기 및 허위 정보", code: "FRAUD" },
+  { label: "기타 (직접 입력)", code: "ETC" },
 ];
 
 export function ReportModal({
@@ -34,23 +36,33 @@ export function ReportModal({
   onSubmit,
   targetName,
 }: ReportModalProps) {
-  const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const [selectedCode, setSelectedCode] = useState<ReportReasonCode | null>(
+    null,
+  );
   const [details, setDetails] = useState("");
 
   const handleClose = () => {
     onClose();
     setTimeout(() => {
-      setSelectedReason(null);
+      setSelectedCode(null);
       setDetails("");
     }, 300);
   };
 
   const handleSubmit = () => {
-    if (!selectedReason) return;
-    onSubmit(selectedReason, details);
+    if (!selectedCode) return;
+
+    const selectedLabel = REPORT_REASONS.find(
+      (r) => r.code === selectedCode,
+    )?.label;
+    const finalDetail = details.trim()
+      ? `[${selectedLabel}] ${details}`
+      : `[${selectedLabel}]`;
+
+    onSubmit(selectedCode, finalDetail);
 
     setTimeout(() => {
-      setSelectedReason(null);
+      setSelectedCode(null);
       setDetails("");
     }, 300);
   };
@@ -79,36 +91,36 @@ export function ReportModal({
 
           {/* 사유 선택 리스트 */}
           <View style={styles.reasonList}>
-            {REPORT_REASONS.map((reason) => (
+            {REPORT_REASONS.map((item) => (
               <Pressable
-                key={reason}
+                key={item.code}
                 style={styles.reasonRow}
-                onPress={() => setSelectedReason(reason)}
+                onPress={() => setSelectedCode(item.code)}
               >
                 <Ionicons
                   name={
-                    selectedReason === reason
+                    selectedCode === item.code
                       ? "radio-button-on"
                       : "radio-button-off"
                   }
                   size={20}
                   color={
-                    selectedReason === reason ? colors.main : colors.gray400
+                    selectedCode === item.code ? colors.main : colors.gray400
                   }
                 />
                 <Text
                   style={[
                     styles.reasonText,
-                    selectedReason === reason && styles.reasonTextSelected,
+                    selectedCode === item.code && styles.reasonTextSelected,
                   ]}
                 >
-                  {reason}
+                  {item.label}
                 </Text>
               </Pressable>
             ))}
           </View>
 
-          {selectedReason === "기타 (직접 입력)" && (
+          {selectedCode === "ETC" && (
             <TextInput
               style={styles.detailsInput}
               placeholder="신고 사유를 상세히 적어주세요. (최대 100자)"
@@ -124,8 +136,7 @@ export function ReportModal({
             variant="primary"
             fullWidth
             disabled={
-              !selectedReason ||
-              (selectedReason === "기타 (직접 입력)" && !details.trim())
+              !selectedCode || (selectedCode === "ETC" && !details.trim())
             }
             onPress={handleSubmit}
             wrapperStyle={{ marginTop: spacing.md }}

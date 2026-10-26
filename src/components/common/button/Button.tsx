@@ -84,10 +84,12 @@ export const Button = forwardRef<View, ButtonProps>(
           wrapperStyle,
         ]}
       >
-        {startIcon && <View style={buttonStyles.iconWrapper}>{startIcon}</View>}
+        {startIcon ? (
+          <View style={buttonStyles.iconWrapper}>{startIcon}</View>
+        ) : null}
 
-        {children &&
-          (iconOnly ? (
+        {!!children || children === 0 ? (
+          iconOnly ? (
             <View style={buttonStyles.iconWrapper}>{children}</View>
           ) : (
             <Text
@@ -102,9 +104,12 @@ export const Button = forwardRef<View, ButtonProps>(
             >
               {children}
             </Text>
-          ))}
+          )
+        ) : null}
 
-        {endIcon && <View style={buttonStyles.iconWrapper}>{endIcon}</View>}
+        {endIcon ? (
+          <View style={buttonStyles.iconWrapper}>{endIcon}</View>
+        ) : null}
       </Pressable>
     );
   },
